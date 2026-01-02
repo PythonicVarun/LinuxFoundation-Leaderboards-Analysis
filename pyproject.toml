@@ -1,0 +1,14 @@
+[project]
+name = "linuxfoundation-leaderboards-analysis"
+version = "1.0.0"
+description = "LFX leaderboard analysis"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "altair>=6.0.0",
+    "marimo>=0.18.4",
+    "matplotlib>=3.10.8",
+    "pandas>=2.3.3",
+    "requests>=2.32.5",
+    "seaborn>=0.13.2",
+]
