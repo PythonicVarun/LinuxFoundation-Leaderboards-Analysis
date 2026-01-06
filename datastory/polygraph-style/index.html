@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Secret Lives of Open Source Projects | A Data Story</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #13131a;
+            --accent-cyan: #00f5d4;
+            --accent-pink: #ff006e;
+            --accent-purple: #8338ec;
+            --accent-yellow: #ffbe0b;
+            --accent-orange: #fb5607;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --gradient-1: linear-gradient(135deg, #00f5d4 0%, #8338ec 100%);
+            --gradient-2: linear-gradient(135deg, #ff006e 0%, #fb5607 100%);
+            --gradient-3: linear-gradient(135deg, #ffbe0b 0%, #ff006e 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-top: 2rem;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 4px;
+            background: var(--bg-card);
+            border-radius: 2px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: var(--gradient-1);
+            width: 0%;
+            animation: loading 2s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 70%; margin-left: 0; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(131, 56, 236, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 245, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 0, 110, 0.05) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(0, 245, 212, 0.1);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 50px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 245, 212, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(0, 245, 212, 0); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* Section Styles */
+        .section {
+            min-height: 100vh;
+            padding: 6rem 2rem;
+            position: relative;
+        }
+
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Scrolly Container */
+        .scrolly-container {
+            display: flex;
+            gap: 4rem;
+            position: relative;
+        }
+
+        .scrolly-text {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .scrolly-step {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            opacity: 0.3;
+            transition: opacity 0.5s ease;
+        }
+
+        .scrolly-step.active {
+            opacity: 1;
+        }
+
+        .scrolly-step-content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scrolly-step-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+        }
+
+        .scrolly-step-content p {
+            color: var(--text-secondary);
+        }
+
+        .scrolly-graphic {
+            flex: 2;
+            position: sticky;
+            top: 10vh;
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Bar Chart Styles */
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: calc(100% - 100px);
+            overflow-y: auto;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .bar-label {
+            width: 180px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .bar.cyan { background: var(--gradient-1); }
+        .bar.pink { background: var(--gradient-2); }
+        .bar.yellow { background: var(--gradient-3); }
+        .bar.purple { background: linear-gradient(135deg, #8338ec 0%, #ff006e 100%); }
+
+        /* Scatter Plot */
+        .scatter-container {
+            width: 100%;
+            height: calc(100% - 80px);
+            position: relative;
+        }
+
+        .scatter-dot {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .scatter-dot:hover {
+            transform: scale(1.5);
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .scatter-tooltip {
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+            max-width: 250px;
+        }
+
+        .scatter-tooltip.visible {
+            opacity: 1;
+        }
+
+        .scatter-axis {
+            position: absolute;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .scatter-axis.x {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .scatter-axis.y {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        /* Insight Cards */
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .insight-card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .insight-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-icon.cyan { background: rgba(0, 245, 212, 0.2); }
+        .insight-icon.pink { background: rgba(255, 0, 110, 0.2); }
+        .insight-icon.purple { background: rgba(131, 56, 236, 0.2); }
+        .insight-icon.yellow { background: rgba(255, 190, 11, 0.2); }
+
+        .insight-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .insight-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .insight-stat {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+
+        .insight-stat.cyan { color: var(--accent-cyan); }
+        .insight-stat.pink { color: var(--accent-pink); }
+        .insight-stat.purple { color: var(--accent-purple); }
+        .insight-stat.yellow { color: var(--accent-yellow); }
+
+        /* Data Table */
+        .data-table-container {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 2rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: rgba(0, 245, 212, 0.1);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-cyan);
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .rank-badge.gold { background: linear-gradient(135deg, #ffd700, #ff8c00); }
+        .rank-badge.silver { background: linear-gradient(135deg, #c0c0c0, #808080); }
+        .rank-badge.bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); }
+        .rank-badge.default { background: rgba(255, 255, 255, 0.1); }
+
+        /* Quote Block */
+        .quote-block {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 2rem;
+            margin: 3rem 0;
+            border-radius: 0 1rem 1rem 0;
+        }
+
+        .quote-block p {
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .quote-block cite {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Callout */
+        .callout {
+            background: rgba(255, 0, 110, 0.1);
+            border: 1px solid rgba(255, 0, 110, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .callout-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .callout p {
+            color: var(--text-secondary);
+        }
+
+        /* Questions Section Styles */
+        .questions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .question-card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            animation-delay: var(--delay);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .question-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 245, 212, 0.1);
+        }
+
+        .question-card:nth-child(2):hover { border-color: var(--accent-pink); box-shadow: 0 10px 40px rgba(255, 0, 110, 0.1); }
+        .question-card:nth-child(3):hover { border-color: var(--accent-purple); box-shadow: 0 10px 40px rgba(131, 56, 236, 0.1); }
+        .question-card:nth-child(4):hover { border-color: var(--accent-yellow); box-shadow: 0 10px 40px rgba(255, 190, 11, 0.1); }
+        .question-card:nth-child(5):hover { border-color: var(--accent-cyan); }
+        .question-card:nth-child(6):hover { border-color: var(--accent-pink); }
+        .question-card:nth-child(7):hover { border-color: var(--accent-purple); }
+        .question-card:nth-child(8):hover { border-color: var(--accent-yellow); }
+
+        .question-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 245, 212, 0.1);
+            border-radius: 12px;
+        }
+
+        .question-card:nth-child(2) .question-icon { background: rgba(255, 0, 110, 0.1); }
+        .question-card:nth-child(3) .question-icon { background: rgba(131, 56, 236, 0.1); }
+        .question-card:nth-child(4) .question-icon { background: rgba(255, 190, 11, 0.1); }
+        .question-card:nth-child(5) .question-icon { background: rgba(0, 245, 212, 0.1); }
+        .question-card:nth-child(6) .question-icon { background: rgba(255, 0, 110, 0.1); }
+        .question-card:nth-child(7) .question-icon { background: rgba(131, 56, 236, 0.1); }
+        .question-card:nth-child(8) .question-icon { background: rgba(255, 190, 11, 0.1); }
+
+        .question-content {
+            flex: 1;
+        }
+
+        .question-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .question-card:nth-child(2) .question-title { color: var(--accent-pink); }
+        .question-card:nth-child(3) .question-title { color: var(--accent-purple); }
+        .question-card:nth-child(4) .question-title { color: var(--accent-yellow); }
+        .question-card:nth-child(5) .question-title { color: var(--accent-cyan); }
+        .question-card:nth-child(6) .question-title { color: var(--accent-pink); }
+        .question-card:nth-child(7) .question-title { color: var(--accent-purple); }
+        .question-card:nth-child(8) .question-title { color: var(--accent-yellow); }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .question-detail {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .question-detail strong {
+            color: var(--text-secondary);
+        }
+
+        .mission-statement {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(131, 56, 236, 0.1));
+            border-radius: 1.5rem;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 3rem;
+            border: 1px solid rgba(0, 245, 212, 0.2);
+        }
+
+        .mission-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .mission-statement h3 {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .mission-statement p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .questions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .question-card {
+                flex-direction: column;
+            }
+            
+            .mission-statement {
+                padding: 2rem;
+            }
+        }
+
+        /* Analysis Section Styles */
+        .analysis-intro {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .analysis-intro p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .analysis-intro p:last-child {
+            margin-bottom: 0;
+        }
+
+        .analysis-legend {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+        }
+
+        .analysis-legend li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-dot.cyan { background: var(--accent-cyan); }
+        .legend-dot.pink { background: var(--accent-pink); }
+        .legend-dot.purple { background: var(--accent-purple); }
+        .legend-dot.yellow { background: var(--accent-yellow); }
+
+        .analysis-warning {
+            color: var(--accent-pink) !important;
+            font-weight: 500;
+        }
+
+        .stat-highlight {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.1), rgba(131, 56, 236, 0.1));
+            border-radius: 1.5rem;
+            padding: 3rem;
+            text-align: center;
+            margin: 2rem 0;
+            border: 1px solid rgba(0, 245, 212, 0.2);
+        }
+
+        .stat-big {
+            font-size: 5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin: 1rem 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .table-title {
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+            padding: 0 1rem;
+        }
+
+        .segmented-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .callout strong {
+            color: var(--accent-pink);
+        }
+
+        /* Methodology Section */
+        .methodology {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 3rem;
+            margin-top: 4rem;
+        }
+
+        .methodology h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .methodology-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .methodology-item h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .methodology-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-card);
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            background: rgba(0, 245, 212, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            z-index: 1000;
+            transition: width 0.1s linear;
+        }
+
+        /* Mobile Navigation */
+        .nav-dots {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .nav-dot:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .scrolly-container {
+                flex-direction: column;
+            }
+
+            .scrolly-text {
+                max-width: 100%;
+            }
+
+            .scrolly-graphic {
+                position: relative;
+                top: 0;
+                height: 60vh;
+            }
+
+            .scrolly-step {
+                min-height: auto;
+                padding: 2rem 0;
+            }
+
+            .nav-dots {
+                display: none;
+            }
+
+            .hero-stats {
+                gap: 2rem;
+            }
+
+            .hero-stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .section {
+                padding: 4rem 1rem;
+            }
+
+            .bar-label {
+                width: 100px;
+                font-size: 0.75rem;
+            }
+
+            .insight-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Counter Animation */
+        .counter {
+            display: inline-block;
+        }
+
+        /* Particle Background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-100px) translateX(50px); }
+            50% { transform: translateY(-50px) translateX(-50px); }
+            75% { transform: translateY(-150px) translateX(25px); }
+        }
+
+        /* Highlight text */
+        .highlight {
+            background: linear-gradient(120deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 245, 212, 0.3) 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 40%;
+            background-position: 0 90%;
+        }
+
+        .highlight-pink {
+            background: linear-gradient(120deg, rgba(255, 0, 110, 0.3) 0%, rgba(255, 0, 110, 0.3) 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 40%;
+            background-position: 0 90%;
+        }
+
+        /* Number highlight */
+        .big-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text">Crunching 5,000+ projects...</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Navigation Dots -->
+    <nav class="nav-dots" id="navDots">
+        <div class="nav-dot active" data-section="hero"></div>
+        <div class="nav-dot" data-section="section1"></div>
+        <div class="nav-dot" data-section="section2"></div>
+        <div class="nav-dot" data-section="section3"></div>
+        <div class="nav-dot" data-section="section4"></div>
+        <div class="nav-dot" data-section="section5"></div>
+        <div class="nav-dot" data-section="section6"></div>
+        <div class="nav-dot" data-section="section7"></div>
+        <div class="nav-dot" data-section="section8"></div>
+        <div class="nav-dot" data-section="section9"></div>
+    </nav>
+
+    <!-- Tooltip -->
+    <div class="scatter-tooltip" id="tooltip"></div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="hero-badge">📊 A Data Story</div>
+            <h1>The Secret Lives of Open Source Projects</h1>
+            <p class="hero-subtitle">
+                You've seen the GitHub stars. The trending repos. The "10x developer" myths.
+                <br><br>
+                <strong>We analyzed every metric.</strong> Seriously. We counted.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-number counter" data-target="5200">0</div>
+                    <div class="hero-stat-label">Projects Analyzed</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-number counter" data-target="5100">0</div>
+                    <div class="hero-stat-label">Organizations</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-number counter" data-target="11">0</div>
+                    <div class="hero-stat-label">Metrics Tracked</div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll to explore</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Section 1: Efficiency - David vs Goliath -->
+    <section class="section" id="section1" style="background: linear-gradient(180deg, var(--bg-dark) 0%, rgba(0, 245, 212, 0.05) 50%, var(--bg-dark) 100%);">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">01 / EFFICIENCY</div>
+                <h2 class="section-title">David vs. Goliath</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Do you need a massive army to move fast?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We calculated the <strong>Commits per Contributor</strong> ratio for every project.</p>
+                <ul class="analysis-legend">
+                    <li><span class="legend-dot cyan"></span> <strong>High Ratio</strong> = A small, elite team doing massive work</li>
+                    <li><span class="legend-dot pink"></span> <strong>Low Ratio</strong> = A large community where each person contributes a little (the "Bazaar" model)</li>
+                </ul>
+            </div>
+
+            <div class="chart-container fade-in">
+                <h3 class="chart-title">🏆 Top 15 Most Efficient Projects</h3>
+                <p class="chart-subtitle">Commits per active contributor over the last 12 months</p>
+                <div class="bar-chart" id="efficiencyChart"></div>
+            </div>
+
+            <div class="callout fade-in">
+                <div class="callout-icon">💡</div>
+                <p>
+                    <strong>The Verdict:</strong> Small teams with fewer than 50 contributors can produce 
+                    <strong>up to 1,138 commits per person</strong>. Meanwhile, some mega-projects average fewer than 3 commits per contributor.
+                    <em>The "Special Forces" of open source are real.</em>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Triage Trap - Speed vs Quality -->
+    <section class="section" id="section2">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">02 / THE TRIAGE TRAP</div>
+                <h2 class="section-title">Speed vs. Quality</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"If a project responds instantly to issues, they probably fix them faster too, right?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We correlated <strong>Response Time</strong> (how fast they say "Hello") with <strong>Resolution Rate</strong> (how often they actually close the issue).</p>
+            </div>
+
+            <div class="chart-container fade-in" style="height: 500px;">
+                <h3 class="chart-title">⏱️ Response Time vs. Resolution Rate</h3>
+                <p class="chart-subtitle">Each dot is a project. Hover to explore.</p>
+                <div class="scatter-container" id="responseResolutionScatter">
+                    <div class="scatter-axis x">Response Time (Hours) →</div>
+                    <div class="scatter-axis y">Resolution Rate →</div>
+                </div>
+            </div>
+
+            <div class="stat-highlight fade-in">
+                <div class="stat-big" id="correlationValue">0.03</div>
+                <div class="stat-label">Correlation Coefficient</div>
+                <p class="stat-desc">That's basically <strong>zero</strong>. Fast bots saying "Thanks for your issue!" doesn't mean the bug gets fixed.</p>
+            </div>
+
+            <div class="callout fade-in" style="background: rgba(255, 0, 110, 0.1); border-color: rgba(255, 0, 110, 0.3);">
+                <div class="callout-icon">🤖</div>
+                <p>
+                    <strong>The Verdict:</strong> Don't be fooled by fast response times. Many projects use bots that reply instantly but never actually address the underlying issue. <em>Speed ≠ Quality</em>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Growth vs Maintenance -->
+    <section class="section" id="section3" style="background: linear-gradient(180deg, var(--bg-dark) 0%, rgba(131, 56, 236, 0.05) 50%, var(--bg-dark) 100%);">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">03 / GROWTH VS MAINTENANCE</div>
+                <h2 class="section-title">Building or Fixing?</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Is the project building a skyscraper or just painting the walls?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We compare <strong>Commit Activity</strong> against <strong>Codebase Size</strong>.</p>
+                <ul class="analysis-legend">
+                    <li><span class="legend-dot purple"></span> <strong>High Commits + Low Size</strong> = Heavy refactoring or technical debt cleanup</li>
+                    <li><span class="legend-dot yellow"></span> <strong>High Commits + High Size</strong> = Massive expansion</li>
+                </ul>
+            </div>
+
+            <div class="chart-container fade-in" style="height: 500px;">
+                <h3 class="chart-title">🏗️ Commit Activity vs. Codebase Size</h3>
+                <p class="chart-subtitle">Projects in the upper-left are "maintenance heavy"</p>
+                <div class="scatter-container" id="growthMaintenanceScatter">
+                    <div class="scatter-axis x">Commits →</div>
+                    <div class="scatter-axis y">Codebase Size (LOC) →</div>
+                </div>
+            </div>
+
+            <div class="data-table-container fade-in" style="margin-top: 2rem;">
+                <h3 class="table-title">🔧 Top Maintenance/Refactoring Projects</h3>
+                <table class="data-table" id="maintenanceTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Project</th>
+                            <th>Commits</th>
+                            <th>Codebase Size</th>
+                            <th>Maintenance Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="callout fade-in" style="background: rgba(131, 56, 236, 0.1); border-color: rgba(131, 56, 236, 0.3);">
+                <div class="callout-icon">🔍</div>
+                <p>
+                    <strong>The Verdict:</strong> Projects like <strong>Model Context Protocol (MCP)</strong> appeared with huge activity but small size—classic signs of a new, rapidly iterating standard or heavy refactoring.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Hidden Gems -->
+    <section class="section" id="section4">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">04 / HIDDEN GEMS</div>
+                <h2 class="section-title">Corporate Darlings</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Which projects have huge corporate buy-in but relatively small contributor circles?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We look for a high <strong>Organizational Diversity Ratio</strong> (Organizations / Contributors).</p>
+                <ul class="analysis-legend">
+                    <li><span class="legend-dot yellow"></span> <strong>High Ratio</strong> = Many companies care, but few people write the code (critical infrastructure)</li>
+                    <li><span class="legend-dot cyan"></span> <strong>Low Ratio</strong> = Massive community project where contributor count dwarfs org count</li>
+                </ul>
+            </div>
+
+            <div class="chart-container fade-in" style="height: 500px;">
+                <h3 class="chart-title">💎 Contributors vs. Organizations</h3>
+                <p class="chart-subtitle">Larger dots = higher organizational diversity</p>
+                <div class="scatter-container" id="hiddenGemsScatter">
+                    <div class="scatter-axis x">Active Contributors →</div>
+                    <div class="scatter-axis y">Active Organizations →</div>
+                </div>
+            </div>
+
+            <div class="data-table-container fade-in" style="margin-top: 2rem;">
+                <h3 class="table-title">💎 Top Hidden Gems (High Corporate Backing, Small Teams)</h3>
+                <table class="data-table" id="hiddenGemsTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Project</th>
+                            <th>Organizations</th>
+                            <th>Contributors</th>
+                            <th>Diversity Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="callout fade-in" style="background: rgba(255, 190, 11, 0.1); border-color: rgba(255, 190, 11, 0.3);">
+                <div class="callout-icon">🏆</div>
+                <p>
+                    <strong>The Verdict:</strong> These "Hidden Gems" are often the safest bets for enterprise adoption—<em>stable, backed by many, but not chaotic</em>. Think critical infrastructure libraries like <strong>Numcodecs</strong> or <strong>ko</strong>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Bus Factor -->
+    <section class="section" id="section5" style="background: linear-gradient(180deg, var(--bg-dark) 0%, rgba(0, 245, 212, 0.05) 50%, var(--bg-dark) 100%);">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">05 / THE BUS FACTOR</div>
+                <h2 class="section-title">Small Teams, Massive Output</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Which projects are punching way above their weight (and thus have the highest 'Bus Factor' risk)?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>Projects with <strong>≤50 contributors</strong> generating massive commit volumes.</p>
+                <p class="analysis-warning">⚠️ <strong>Risk:</strong> High output from a small group means if one key person leaves, the project could stall.</p>
+            </div>
+
+            <div class="chart-container fade-in">
+                <h3 class="chart-title">🚌 Small Teams Leaderboard</h3>
+                <p class="chart-subtitle">Total commits from projects with 50 or fewer contributors</p>
+                <div class="bar-chart" id="smallTeamsChart"></div>
+            </div>
+
+            <div class="data-table-container fade-in" style="margin-top: 2rem; max-height: 400px; overflow-y: auto;">
+                <table class="data-table" id="smallTeamsTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Project</th>
+                            <th>Total Commits</th>
+                            <th>Linux Foundation</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="callout fade-in">
+                <div class="callout-icon">🎯</div>
+                <p>
+                    <strong>The Verdict:</strong> These are the "David" projects of the ecosystem. <em>Impressive, but fragile.</em> If you depend on these, make sure there's a succession plan.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Burnout Risk -->
+    <section class="section" id="section6">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">06 / BURNOUT RISK</div>
+                <h2 class="section-title">Running Out of Steam</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Who is running out of steam?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We looked at projects with <strong>High Productivity Scores</strong> that have seen a <strong>massive drop in momentum</strong> (commits plummeting compared to the previous period).</p>
+            </div>
+
+            <div class="chart-container fade-in" style="height: 500px;">
+                <h3 class="chart-title">🔥 Productivity vs. Momentum</h3>
+                <p class="chart-subtitle">Red dots = slowing down. Green dots = accelerating.</p>
+                <div class="scatter-container" id="burnoutScatter">
+                    <div class="scatter-axis x">Productivity Score →</div>
+                    <div class="scatter-axis y">Momentum (Activity Change) →</div>
+                </div>
+            </div>
+
+            <div class="data-table-container fade-in" style="margin-top: 2rem;">
+                <h3 class="table-title">🚨 Burnout Risk Watchlist</h3>
+                <table class="data-table" id="burnoutTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Project</th>
+                            <th>Productivity</th>
+                            <th>Current Commits</th>
+                            <th>Previous Period</th>
+                            <th>Momentum</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="callout fade-in" style="background: rgba(255, 0, 110, 0.1); border-color: rgba(255, 0, 110, 0.3);">
+                <div class="callout-icon">⚠️</div>
+                <p>
+                    <strong>The Verdict:</strong> We found alarming drops in projects like <strong>Islet</strong> and <strong>CheriBSD</strong> (>97% drop). These teams were running hot but are now stalling. <em>If you depend on these, check on them.</em>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 7: Churn Trap -->
+    <section class="section" id="section7" style="background: linear-gradient(180deg, var(--bg-dark) 0%, rgba(255, 0, 110, 0.05) 50%, var(--bg-dark) 100%);">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">07 / THE CHURN TRAP</div>
+                <h2 class="section-title">Motion vs. Progress</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Are they building new features or just rewriting the same code forever?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We calculated a <strong>Churn Ratio</strong>: Commits per Net Line of Code Change.</p>
+                <ul class="analysis-legend">
+                    <li><span class="legend-dot cyan"></span> <strong>Low Ratio (~1.0)</strong> = Every commit adds value (Growth)</li>
+                    <li><span class="legend-dot pink"></span> <strong>High Ratio (>100)</strong> = Hundreds of commits to change 5 lines of code (Spinning wheels)</li>
+                </ul>
+            </div>
+
+            <div class="data-table-container fade-in">
+                <h3 class="table-title">🔄 High Churn Projects (Spinning Wheels?)</h3>
+                <table class="data-table" id="churnTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Project</th>
+                            <th>Commits</th>
+                            <th>Code Changes</th>
+                            <th>Churn Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="callout fade-in" style="background: rgba(255, 0, 110, 0.1); border-color: rgba(255, 0, 110, 0.3);">
+                <div class="callout-icon">🔄</div>
+                <p>
+                    <strong>The Verdict:</strong> Projects like <strong>Model Context Protocol (MCP)</strong> and <strong>EVerest</strong> have ratios >2,800. This indicates massive refactoring, stabilization, or non-code work. They are <em>spinning their wheels (or polishing the engine)</em> rather than driving forward.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 8: Libraries vs Apps -->
+    <section class="section" id="section8">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">08 / LIBRARIES VS APPS</div>
+                <h2 class="section-title">The "Free Rider" Problem</h2>
+                <p class="section-subtitle">
+                    <span class="highlight">"Is a low contributor count always bad?"</span>
+                </p>
+            </div>
+
+            <div class="analysis-intro fade-in">
+                <p>We segmented our "Hidden Gems" into <strong>Libraries</strong> and <strong>Apps</strong>.</p>
+                <ul class="analysis-legend">
+                    <li><span class="legend-dot purple"></span> <strong>Libraries</strong> (e.g., Resolve, MarkupSafe): High corp use + low contributors = <span class="highlight">Healthy</span>. Stable APIs don't need a thousand cooks.</li>
+                    <li><span class="legend-dot pink"></span> <strong>Apps</strong> (e.g., E4S): High corp use + low contributors = <span class="highlight">Warning</span>. Companies using the app but not giving back.</li>
+                </ul>
+            </div>
+
+            <div class="chart-container fade-in" style="height: 500px;">
+                <h3 class="chart-title">📚 Hidden Gems Segmentation</h3>
+                <p class="chart-subtitle">Color-coded by type: Libraries vs. Apps vs. Hybrid</p>
+                <div class="scatter-container" id="segmentedGemsScatter">
+                    <div class="scatter-axis x">Active Contributors →</div>
+                    <div class="scatter-axis y">Active Organizations →</div>
+                </div>
+            </div>
+
+            <div class="segmented-legend fade-in">
+                <div class="legend-item"><span class="legend-color" style="background: #8338ec;"></span> Library/Tool</div>
+                <div class="legend-item"><span class="legend-color" style="background: #ff006e;"></span> End-User App</div>
+                <div class="legend-item"><span class="legend-color" style="background: #ffbe0b;"></span> Hybrid/Platform</div>
+                <div class="legend-item"><span class="legend-color" style="background: #00f5d4;"></span> Unclassified</div>
+            </div>
+
+            <div class="callout fade-in" style="background: rgba(131, 56, 236, 0.1); border-color: rgba(131, 56, 236, 0.3);">
+                <div class="callout-icon">📚</div>
+                <p>
+                    <strong>The Verdict:</strong> This distinction saves us from flagging a perfectly healthy library as "stagnant". Context matters—<em>a low contributor count on a library is often a sign of stability, not neglect</em>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 9: Conclusions -->
+    <section class="section" id="section9" style="background: linear-gradient(180deg, var(--bg-dark) 0%, rgba(0, 245, 212, 0.03) 50%, var(--bg-dark) 100%);">
+        <div class="section-container">
+            <div class="section-header fade-in">
+                <div class="section-number">09 / THE TAKEAWAYS</div>
+                <h2 class="section-title">What the Data Tells Us</h2>
+                <p class="section-subtitle">
+                    After analyzing 5,000+ projects, here's what we learned about open source health
+                </p>
+            </div>
+
+            <div class="insight-grid">
+                <div class="insight-card fade-in">
+                    <div class="insight-icon cyan">⚡</div>
+                    <h3>Size ≠ Productivity</h3>
+                    <p>Small, focused teams consistently outperform massive communities on a per-contributor basis.</p>
+                    <div class="insight-stat cyan">1,138</div>
+                </div>
+                <div class="insight-card fade-in">
+                    <div class="insight-icon pink">🤖</div>
+                    <h3>Bots ≠ Quality</h3>
+                    <p>Fast response times don't correlate with actually fixing issues. Correlation: <strong>0.03</strong>.</p>
+                    <div class="insight-stat pink">0.03</div>
+                </div>
+                <div class="insight-card fade-in">
+                    <div class="insight-icon purple">💎</div>
+                    <h3>Hidden Gems Exist</h3>
+                    <p>Critical infrastructure often has high corporate backing but few contributors. These are your best bets.</p>
+                    <div class="insight-stat purple" id="gemsCount">20</div>
+                </div>
+                <div class="insight-card fade-in">
+                    <div class="insight-icon yellow">🚌</div>
+                    <h3>Bus Factor is Real</h3>
+                    <p>Small teams with massive output are impressive but fragile. Know your dependencies.</p>
+                    <div class="insight-stat yellow">≤50</div>
+                </div>
+                <div class="insight-card fade-in">
+                    <div class="insight-icon pink">🔥</div>
+                    <h3>Burnout Happens</h3>
+                    <p>Some projects dropped >97% in activity. High productivity teams can burn out fast.</p>
+                    <div class="insight-stat pink">-97%</div>
+                </div>
+                <div class="insight-card fade-in">
+                    <div class="insight-icon cyan">🔄</div>
+                    <h3>Churn ≠ Progress</h3>
+                    <p>High commit counts with little code growth often means refactoring, not feature development.</p>
+                    <div class="insight-stat cyan">>2,800x</div>
+                </div>
+            </div>
+
+            <!-- Methodology -->
+            <div class="methodology fade-in">
+                <h3>📋 Methodology</h3>
+                <div class="methodology-grid">
+                    <div class="methodology-item">
+                        <h4>Data Source</h4>
+                        <p>LFX Insights API from the Linux Foundation</p>
+                    </div>
+                    <div class="methodology-item">
+                        <h4>Time Period</h4>
+                        <p>Last 12 months (rolling window)</p>
+                    </div>
+                    <div class="methodology-item">
+                        <h4>Metrics Used</h4>
+                        <p>Contributors, commits, orgs, codebase size, response times, merge velocity</p>
+                    </div>
+                    <div class="methodology-item">
+                        <h4>Analysis Tools</h4>
+                        <p>Python, Pandas, Altair, Marimo notebooks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <h3>Want the raw data?</h3>
+            <p>We believe in transparency. Download the full dataset and methodology to run your own analysis.</p>
+            <div class="footer-links">
+                <a href="../report_data.json" download class="footer-link">
+                    📥 Download Data (JSON)
+                </a>
+                <a href="https://github.com/PythonicVarun/LinuxFoundation-Leaderboards-Analysis" target="_blank" class="footer-link">
+                    🔗 View on GitHub
+                </a>
+                <a href="https://insights.lfx.linuxfoundation.org/" target="_blank" class="footer-link">
+                    📊 LFX Insights
+                </a>
+            </div>
+        </div>
+        <p style="margin-top: 2rem; font-size: 0.95rem; font-weight: 500;">
+            <span style="background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Analysis by </span><a href="https://github.com/PythonicVarun" target="_blank" style="background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none;">@PythonicVarun</a>
+        </p>
+        <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.85rem;">
+            Built with obsessive data collection and ☕ | © 2025
+        </p>
+    </footer>
+
+    <script>
+        // Global data
+        let reportData = {};
+
+        // Load data from JSON files
+        async function loadData() {
+            try {
+                // Load main report data
+                const response = await fetch('../report_data.json');
+                reportData = await response.json();
+                
+                // Load small teams data from datasets
+                const smallTeamsResponse = await fetch('../../datasets/small-teams-massive-output_full.json');
+                const smallTeamsData = await smallTeamsResponse.json();
+                reportData.small_teams_massive_output = smallTeamsData;
+                
+                initCharts();
+                populateTables();
+                updateStats();
+                
+                // Hide loading screen
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                }, 1000);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.querySelector('.loading-text').textContent = 'Error loading data. Please refresh.';
+            }
+        }
+
+        // Initialize all charts
+        function initCharts() {
+            createEfficiencyChart();
+            createResponseResolutionScatter();
+            createGrowthMaintenanceScatter();
+            createHiddenGemsScatter();
+            createSmallTeamsChart();
+            createBurnoutScatter();
+            createSegmentedGemsScatter();
+        }
+
+        // 1. Efficiency Bar Chart
+        function createEfficiencyChart() {
+            const container = document.getElementById('efficiencyChart');
+            if (!container || !reportData.efficiency) return;
+
+            const data = reportData.efficiency.slice(0, 15);
+            const maxValue = Math.max(...data.map(d => d.commits_per_contributor));
+
+            container.innerHTML = data.map((item, index) => {
+                const percentage = (item.commits_per_contributor / maxValue) * 100;
+                const colors = ['cyan', 'pink', 'yellow', 'purple'];
+                const colorClass = colors[index % colors.length];
+                
+                return `
+                    <div class="bar-item">
+                        <div class="bar-label" title="${item.name}">${item.name}</div>
+                        <div class="bar-wrapper">
+                            <div class="bar ${colorClass}" style="width: 0%;" data-width="${percentage}">
+                                ${Math.round(item.commits_per_contributor)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 2. Response Time vs Resolution Rate Scatter
+        function createResponseResolutionScatter() {
+            const container = document.getElementById('responseResolutionScatter');
+            if (!container || !reportData.response_resolution) return;
+
+            const data = reportData.response_resolution.slice(0, 100);
+            const maxResponse = Math.max(...data.map(d => d.response_time_hours || 0));
+            const maxResolution = Math.max(...data.map(d => d.resolution_rate || 0));
+            const tooltip = document.getElementById('tooltip');
+
+            data.forEach((item, index) => {
+                if (!item.response_time_hours || !item.resolution_rate) return;
+                
+                const x = 5 + ((item.response_time_hours / maxResponse) * 85);
+                const y = 95 - ((item.resolution_rate / maxResolution) * 85);
+                const size = Math.max(6, Math.min(20, 10));
+                const colors = ['#00f5d4', '#ff006e', '#8338ec', '#ffbe0b'];
+                const color = colors[index % colors.length];
+
+                const dot = document.createElement('div');
+                dot.className = 'scatter-dot';
+                dot.style.cssText = `left: ${x}%; top: ${y}%; width: ${size}px; height: ${size}px; background: ${color};`;
+
+                dot.addEventListener('mouseenter', () => {
+                    tooltip.innerHTML = `<strong>${item.name}</strong><br>Response Time: ${item.response_time_hours?.toFixed(1)}h<br>Resolution Rate: ${(item.resolution_rate * 100)?.toFixed(1)}%`;
+                    tooltip.classList.add('visible');
+                });
+                dot.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                });
+                dot.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+                container.appendChild(dot);
+            });
+        }
+
+        // 3. Growth vs Maintenance Scatter
+        function createGrowthMaintenanceScatter() {
+            const container = document.getElementById('growthMaintenanceScatter');
+            if (!container || !reportData.growth_maintenance) return;
+
+            const data = reportData.growth_maintenance.slice(0, 100);
+            const maxCommits = Math.max(...data.map(d => d.commits || 0));
+            const maxSize = Math.max(...data.map(d => d.codebase_size || 0));
+            const tooltip = document.getElementById('tooltip');
+
+            data.forEach((item, index) => {
+                if (!item.commits || !item.codebase_size) return;
+                
+                const x = 5 + ((Math.log10(item.commits + 1) / Math.log10(maxCommits + 1)) * 85);
+                const y = 95 - ((Math.log10(item.codebase_size + 1) / Math.log10(maxSize + 1)) * 85);
+                const size = Math.max(6, Math.min(25, Math.sqrt(item.maintenance_ratio || 1) * 3));
+                const colors = ['#8338ec', '#ffbe0b', '#00f5d4', '#ff006e'];
+                const color = colors[index % colors.length];
+
+                const dot = document.createElement('div');
+                dot.className = 'scatter-dot';
+                dot.style.cssText = `left: ${x}%; top: ${y}%; width: ${size}px; height: ${size}px; background: ${color};`;
+
+                dot.addEventListener('mouseenter', () => {
+                    tooltip.innerHTML = `<strong>${item.name}</strong><br>Commits: ${item.commits?.toLocaleString()}<br>Codebase: ${item.codebase_size?.toLocaleString()} LOC<br>Maintenance Ratio: ${item.maintenance_ratio?.toFixed(4)}`;
+                    tooltip.classList.add('visible');
+                });
+                dot.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                });
+                dot.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+                container.appendChild(dot);
+            });
+        }
+
+        // 4. Hidden Gems Scatter
+        function createHiddenGemsScatter() {
+            const container = document.getElementById('hiddenGemsScatter');
+            if (!container || !reportData.org_diversity_all) return;
+
+            const data = reportData.org_diversity_all.filter(d => d.active_contributors > 10).slice(0, 150);
+            const maxContributors = Math.max(...data.map(d => d.active_contributors || 0));
+            const maxOrgs = Math.max(...data.map(d => d.active_organizations || 0));
+            const tooltip = document.getElementById('tooltip');
+
+            data.forEach((item, index) => {
+                const x = 5 + ((Math.log10(item.active_contributors + 1) / Math.log10(maxContributors + 1)) * 85);
+                const y = 95 - ((Math.log10(item.active_organizations + 1) / Math.log10(maxOrgs + 1)) * 85);
+                const size = Math.max(6, Math.min(30, (item.org_diversity_ratio || 0) * 20));
+                const colors = ['#ffbe0b', '#00f5d4', '#8338ec', '#ff006e'];
+                const color = colors[index % colors.length];
+
+                const dot = document.createElement('div');
+                dot.className = 'scatter-dot';
+                dot.style.cssText = `left: ${x}%; top: ${y}%; width: ${size}px; height: ${size}px; background: ${color};`;
+
+                dot.addEventListener('mouseenter', () => {
+                    tooltip.innerHTML = `<strong>${item.name}</strong><br>Contributors: ${item.active_contributors}<br>Organizations: ${item.active_organizations}<br>Diversity Ratio: ${item.org_diversity_ratio?.toFixed(2)}`;
+                    tooltip.classList.add('visible');
+                });
+                dot.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                });
+                dot.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+                container.appendChild(dot);
+            });
+        }
+
+        // 5. Small Teams Bar Chart
+        function createSmallTeamsChart() {
+            const container = document.getElementById('smallTeamsChart');
+            if (!container || !reportData.small_teams_massive_output) return;
+
+            const data = reportData.small_teams_massive_output.slice(0, 15);
+            const maxValue = Math.max(...data.map(d => d.value));
+
+            container.innerHTML = data.map((item, index) => {
+                const percentage = (item.value / maxValue) * 100;
+                const colors = ['pink', 'cyan', 'purple', 'yellow'];
+                const colorClass = colors[index % colors.length];
+                
+                return `
+                    <div class="bar-item">
+                        <div class="bar-label" title="${item.name}">${item.name}</div>
+                        <div class="bar-wrapper">
+                            <div class="bar ${colorClass}" style="width: 0%;" data-width="${percentage}">
+                                ${item.value.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 6. Burnout Risk Scatter
+        function createBurnoutScatter() {
+            const container = document.getElementById('burnoutScatter');
+            if (!container || !reportData.burnout_all) return;
+
+            const data = reportData.burnout_all.filter(d => d.commits > 50).slice(0, 150);
+            const maxProductivity = Math.max(...data.map(d => d.productivity_score || 0));
+            const minMomentum = Math.min(...data.map(d => d.momentum || 0));
+            const maxMomentum = Math.max(...data.map(d => d.momentum || 0));
+            const tooltip = document.getElementById('tooltip');
+
+            // Add zero line
+            const zeroLine = document.createElement('div');
+            const zeroY = 95 - ((0 - minMomentum) / (maxMomentum - minMomentum) * 85);
+            zeroLine.style.cssText = `position: absolute; left: 5%; right: 5%; top: ${zeroY}%; height: 2px; background: rgba(255,255,255,0.3);`;
+            container.appendChild(zeroLine);
+
+            data.forEach((item, index) => {
+                if (!item.productivity_score) return;
+                
+                const x = 5 + ((Math.log10(item.productivity_score + 1) / Math.log10(maxProductivity + 1)) * 85);
+                const y = 95 - ((item.momentum - minMomentum) / (maxMomentum - minMomentum) * 85);
+                const size = 8;
+                const color = item.momentum < 0 ? '#ff006e' : '#00f5d4';
+
+                const dot = document.createElement('div');
+                dot.className = 'scatter-dot';
+                dot.style.cssText = `left: ${x}%; top: ${y}%; width: ${size}px; height: ${size}px; background: ${color};`;
+
+                dot.addEventListener('mouseenter', () => {
+                    tooltip.innerHTML = `<strong>${item.name}</strong><br>Productivity: ${item.productivity_score?.toFixed(1)}<br>Current: ${item.commits?.toLocaleString()}<br>Previous: ${item.prev_commits?.toLocaleString()}<br>Momentum: ${(item.momentum * 100)?.toFixed(1)}%`;
+                    tooltip.classList.add('visible');
+                });
+                dot.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                });
+                dot.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+                container.appendChild(dot);
+            });
+        }
+
+        // 8. Segmented Gems Scatter
+        function createSegmentedGemsScatter() {
+            const container = document.getElementById('segmentedGemsScatter');
+            if (!container || !reportData.segmented_gems) return;
+
+            const data = reportData.segmented_gems;
+            const maxContributors = Math.max(...data.map(d => d.active_contributors || 0));
+            const maxOrgs = Math.max(...data.map(d => d.active_organizations || 0));
+            const tooltip = document.getElementById('tooltip');
+
+            const typeColors = {
+                'Library/Tool': '#8338ec',
+                'End-User App': '#ff006e',
+                'Hybrid/Platform': '#ffbe0b',
+                'Unclassified': '#00f5d4'
+            };
+
+            data.forEach((item) => {
+                const x = 5 + ((Math.log10(item.active_contributors + 1) / Math.log10(maxContributors + 1)) * 85);
+                const y = 95 - ((Math.log10(item.active_organizations + 1) / Math.log10(maxOrgs + 1)) * 85);
+                const size = Math.max(10, Math.min(25, (item.org_diversity_ratio || 0) * 15));
+                const color = typeColors[item.type] || '#00f5d4';
+
+                const dot = document.createElement('div');
+                dot.className = 'scatter-dot';
+                dot.style.cssText = `left: ${x}%; top: ${y}%; width: ${size}px; height: ${size}px; background: ${color};`;
+
+                dot.addEventListener('mouseenter', () => {
+                    tooltip.innerHTML = `<strong>${item.name}</strong><br>Type: ${item.type}<br>Contributors: ${item.active_contributors}<br>Organizations: ${item.active_organizations}<br>Diversity: ${item.org_diversity_ratio?.toFixed(2)}`;
+                    tooltip.classList.add('visible');
+                });
+                dot.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                });
+                dot.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+                container.appendChild(dot);
+            });
+        }
+
+        // Populate all Tables
+        function populateTables() {
+            // Small Teams Table
+            populateSmallTeamsTable();
+            // Maintenance Table
+            populateMaintenanceTable();
+            // Hidden Gems Table
+            populateHiddenGemsTable();
+            // Burnout Table
+            populateBurnoutTable();
+            // Churn Table
+            populateChurnTable();
+        }
+
+        function populateSmallTeamsTable() {
+            const tableBody = document.querySelector('#smallTeamsTable tbody');
+            if (!tableBody || !reportData.small_teams_massive_output) return;
+
+            const data = reportData.small_teams_massive_output.slice(0, 30);
+            tableBody.innerHTML = data.map((item, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'default';
+                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.value.toLocaleString()}</td><td>${item.isLF ? '✅' : '—'}</td></tr>`;
+            }).join('');
+        }
+
+        function populateMaintenanceTable() {
+            const tableBody = document.querySelector('#maintenanceTable tbody');
+            if (!tableBody || !reportData.top_maintenance) return;
+
+            const data = reportData.top_maintenance.slice(0, 15);
+            tableBody.innerHTML = data.map((item, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'default';
+                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.commits?.toLocaleString()}</td><td>${item.codebase_size?.toLocaleString()}</td><td>${item.maintenance_ratio?.toFixed(4)}</td></tr>`;
+            }).join('');
+        }
+
+        function populateHiddenGemsTable() {
+            const tableBody = document.querySelector('#hiddenGemsTable tbody');
+            if (!tableBody || !reportData.hidden_gems) return;
+
+            const data = reportData.hidden_gems.slice(0, 20);
+            tableBody.innerHTML = data.map((item, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'default';
+                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.active_organizations}</td><td>${item.active_contributors}</td><td>${item.org_diversity_ratio?.toFixed(2)}</td></tr>`;
+            }).join('');
+        }
+
+        function populateBurnoutTable() {
+            const tableBody = document.querySelector('#burnoutTable tbody');
+            if (!tableBody || !reportData.burnout_risk) return;
+
+            const data = reportData.burnout_risk.slice(0, 15);
+            tableBody.innerHTML = data.map((item, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'default';
+                const momentum = (item.momentum * 100).toFixed(1);
+                const momentumColor = item.momentum < -0.5 ? 'color: #ff006e;' : '';
+                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.productivity_score?.toFixed(1)}</td><td>${item.commits?.toLocaleString()}</td><td>${item.prev_commits?.toLocaleString()}</td><td style="${momentumColor}">${momentum}%</td></tr>`;
+            }).join('');
+        }
+
+        function populateChurnTable() {
+            const tableBody = document.querySelector('#churnTable tbody');
+            if (!tableBody || !reportData.churn_high) return;
+
+            const data = reportData.churn_high.slice(0, 15);
+            tableBody.innerHTML = data.map((item, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'default';
+                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.commits?.toLocaleString()}</td><td>${item.code_changes?.toLocaleString() || 'N/A'}</td><td>${item.churn_ratio?.toFixed(1) || 'N/A'}</td></tr>`;
+            }).join('');
+        }
+
+        // Update Stats
+        function updateStats() {
+            // Correlation value
+            if (reportData.correlation !== undefined) {
+                const el = document.getElementById('correlationValue');
+                if (el) el.textContent = reportData.correlation.toFixed(2);
+            }
+
+            // Gems count
+            if (reportData.hidden_gems) {
+                const el = document.getElementById('gemsCount');
+                if (el) el.textContent = reportData.hidden_gems.length;
+            }
+        }
+
+        // Counter Animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter');
+            counters.forEach(counter => {
+                const target = parseInt(counter.dataset.target);
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                let current = 0;
+
+                const updateCounter = () => {
+                    current += increment;
+                    if (current < target) {
+                        counter.textContent = Math.floor(current).toLocaleString();
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = target.toLocaleString() + '+';
+                    }
+                };
+                updateCounter();
+            });
+        }
+
+        // Scroll Progress
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Intersection Observer for animations
+        function setupObservers() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        if (entry.target.querySelector('.bar-chart')) {
+                            entry.target.querySelectorAll('.bar').forEach(bar => {
+                                bar.style.width = bar.dataset.width + '%';
+                            });
+                        }
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        // Navigation dots
+        function setupNavigation() {
+            const sections = ['hero', 'section1', 'section2', 'section3', 'section4', 'section5', 'section6', 'section7', 'section8', 'section9'];
+            const dots = document.querySelectorAll('.nav-dot');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const index = sections.indexOf(entry.target.id);
+                        dots.forEach((dot, i) => {
+                            dot.classList.toggle('active', i === index);
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) observer.observe(section);
+            });
+
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    const section = document.getElementById(sections[index]);
+                    if (section) section.scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupObservers();
+            setupNavigation();
+            animateCounters();
+            window.addEventListener('scroll', updateProgress);
+        });
+    </script>
+</body>
+</html>

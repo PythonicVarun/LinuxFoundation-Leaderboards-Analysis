@@ -3,6 +3,10 @@
 > [!Note]
 > **Data Attribution:** This project provides an independent analysis derived from [LFX Insights Leaderboards](https://insights.linuxfoundation.org/leaderboards). This project is an independent effort and is not officially affiliated with the Linux Foundation.
 
+## 🌐 Live Data Stories
+
+Explore the interactive data stories: **[View Data Stories](https://pythonicvarun.github.io/LinuxFoundation-Leaderboards-Analysis/datastory)**
+
 ## 📊 Beyond the Leaderboards
 
 This project digs deeper into the Linux Foundation's open source ecosystem data. Instead of just ranking projects by size or activity, we analyze **health**, **efficiency**, and **sustainability**.
@@ -42,6 +46,23 @@ uv run analysis.py
 
 ### 📂 Project Structure
 
-- `analysis.py`: The main Marimo application containing all logic and visualization code.
-- `datasets/`: Contains the raw JSON datasets from LFX Leaderboards.
-- `scraper.py`: (Optional) Utility for fetching fresh data.
+```
+├── analysis.py              # Main Marimo app with analysis & visualizations
+├── scraper.py               # Utility for fetching fresh data from LFX
+├── pyproject.toml           # Project dependencies
+├── datasets/                # Raw JSON datasets from LFX Leaderboards
+│   ├── active-contributors_full.json
+│   ├── commit-activity_full.json
+│   ├── contributors_full.json
+│   ├── focused-teams_full.json
+│   ├── small-teams-massive-output_full.json
+│   └── ...
+└── datastory/               # Generated data stories (GitHub Pages)
+    ├── index.html                  # Landing page for all stories
+    ├── report_data.json            # Processed analysis data
+    ├── chhota-bheem-style/         # Adventure-themed story
+    ├── malcolm-gladwell-style/     # Narrative journalism style
+    ├── polygraph-style/            # Interactive scrollytelling
+    ├── shirley-wu-style/           # Artistic D3.js visualizations
+    └── wall-street-journal-style/  # Financial journalism style
+```

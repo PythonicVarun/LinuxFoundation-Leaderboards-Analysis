@@ -92,7 +92,7 @@ def _():
             # The data is a list of dictionaries
             dfs[key] = pd.DataFrame(data)
             print(f"Loaded {key} with {len(dfs[key])} records")
-    return alt, dfs, pd
+    return alt, dfs, json, os, pd
 
 
 @app.cell(hide_code=True)
@@ -776,6 +776,272 @@ def _(alt, dfs, pd):
         print("Required datasets not found.")
         chart8 = None
     chart8
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 10. 📦 Generating a Complete Report Data for Data Story
+
+    **Purpose:** Export all our analysis insights into a structured JSON format.
+
+    We're consolidating all the metrics we've calculated into a single `report_data.json` file that can power interactive data stories and visualizations.
+
+    This includes:
+    - **Efficiency Rankings**: Commits per contributor for all projects.
+    - **Response vs. Resolution**: Correlation data showing the disconnect between speed and quality.
+    - **Growth vs. Maintenance**: Projects categorized by their development patterns.
+    - **Hidden Gems**: High organizational diversity projects.
+    - **Bus Factor Watchlist**: Small teams with massive output.
+    - **Burnout Risk Indicators**: Projects with declining momentum.
+    - **Churn Analysis**: Motion vs. progress metrics.
+    - **Library vs. App Segmentation**: Categorized project types.
+
+    *This JSON export enables downstream dashboards and data journalism pieces.*
+    """)
+    return
+
+
+@app.cell
+def _(dfs, pd):
+    def generate_report():
+        report_data = {}
+
+        # 1. Efficiency data (matches Section 2: David vs. Goliath)
+        if "active-contributors" in dfs and "commit-activity" in dfs:
+            _ac_df = dfs["active-contributors"][["name", "slug", "value"]].rename(
+                columns={"value": "active_contributors"}
+            )
+            _ca_df = dfs["commit-activity"][["slug", "value"]].rename(
+                columns={"value": "commits"}
+            )
+            merged_df = pd.merge(_ac_df, _ca_df, on="slug", how="inner")
+            merged_df["commits_per_contributor"] = (
+                merged_df["commits"] / merged_df["active_contributors"]
+            )
+            report_data["efficiency"] = merged_df.nlargest(
+                50, "commits_per_contributor"
+            ).to_dict(orient="records")
+            report_data["efficiency_all"] = merged_df.to_dict(orient="records")
+
+        # 2. Response vs Resolution (matches Section 3: The "Triage Trap")
+        if "fastest-responders" in dfs and "resolution-rate" in dfs:
+            fr_df = dfs["fastest-responders"][["name", "slug", "value"]].rename(
+                columns={"value": "response_time_hours"}
+            )
+            rr_df = dfs["resolution-rate"][["slug", "value"]].rename(
+                columns={"value": "resolution_rate"}
+            )
+            merged_rr_fr = pd.merge(fr_df, rr_df, on="slug", how="inner")
+            report_data["response_resolution"] = merged_rr_fr.to_dict(
+                orient="records"
+            )
+            report_data["correlation"] = float(
+                merged_rr_fr["response_time_hours"].corr(
+                    merged_rr_fr["resolution_rate"]
+                )
+            )
+
+        # 3. Growth vs Maintenance (matches Section 4: Growth vs. Maintenance)
+        if "codebase-size" in dfs and "commit-activity" in dfs:
+            cs_df = dfs["codebase-size"][["name", "slug", "value"]].rename(
+                columns={"value": "codebase_size"}
+            )
+            _ca_df = dfs["commit-activity"][["slug", "value"]].rename(
+                columns={"value": "commits"}
+            )
+            merged_cs_ca = pd.merge(cs_df, _ca_df, on="slug", how="inner")
+            merged_cs_ca["maintenance_ratio"] = (
+                merged_cs_ca["commits"] / merged_cs_ca["codebase_size"]
+            )
+            report_data["growth_maintenance"] = merged_cs_ca.to_dict(
+                orient="records"
+            )
+            report_data["top_maintenance"] = merged_cs_ca.nlargest(
+                15, "maintenance_ratio"
+            ).to_dict(orient="records")
+
+        # 4. Hidden Gems (matches Section 5: Finding "Hidden Gems")
+        if "active-organizations" in dfs and "active-contributors" in dfs:
+            ao_df = dfs["active-organizations"][["name", "slug", "value"]].rename(
+                columns={"value": "active_organizations"}
+            )
+            _ac_df = dfs["active-contributors"][["slug", "value"]].rename(
+                columns={"value": "active_contributors"}
+            )
+            merged_org_cont = pd.merge(ao_df, _ac_df, on="slug", how="inner")
+            merged_org_cont["org_diversity_ratio"] = (
+                merged_org_cont["active_organizations"]
+                / merged_org_cont["active_contributors"]
+            )
+            filtered_org_cont = merged_org_cont[
+                merged_org_cont["active_contributors"] > 50
+            ]
+            report_data["hidden_gems"] = filtered_org_cont.nlargest(
+                20, "org_diversity_ratio"
+            ).to_dict(orient="records")
+            report_data["org_diversity_all"] = filtered_org_cont.to_dict(
+                orient="records"
+            )
+
+        # 5. Bus Factor (matches Section 6: Small Teams, Massive Output)
+        if "small-teams-massive-output" in dfs:
+            st_df = dfs["small-teams-massive-output"][
+                ["name", "slug", "value", "collectionsSlugs"]
+            ].rename(columns={"value": "commits"})
+            report_data["bus_factor"] = st_df.nlargest(20, "commits").to_dict(
+                orient="records"
+            )
+
+        # 6. Burnout Risk (matches Section 7: The "Red Alert" List)
+        if "focused-teams" in dfs and "commit-activity" in dfs:
+            _ft_df_burnout = dfs["focused-teams"][["name", "slug", "value"]].rename(
+                columns={"value": "productivity_score"}
+            )
+            _ca_df_burnout = dfs["commit-activity"][
+                ["slug", "value", "previousPeriodValue"]
+            ].rename(
+                columns={"value": "commits", "previousPeriodValue": "prev_commits"}
+            )
+            _merged_burnout = pd.merge(
+                _ft_df_burnout, _ca_df_burnout, on="slug", how="inner"
+            )
+            _merged_burnout["momentum"] = _merged_burnout.apply(
+                lambda row: (
+                    (row["commits"] - row["prev_commits"]) / row["prev_commits"]
+                    if row["prev_commits"] > 0
+                    else 0
+                ),
+                axis=1,
+            )
+            _declining_projects = _merged_burnout[
+                (_merged_burnout["momentum"] < -0.1)
+                & (_merged_burnout["commits"] > 100)
+            ].nsmallest(15, "momentum")
+            report_data["burnout_risk"] = _declining_projects.to_dict(
+                orient="records"
+            )
+            report_data["burnout_all"] = _merged_burnout.to_dict(orient="records")
+
+        # 7. Churn Analysis (matches Section 9: The "Churn" Trap)
+        if "codebase-size" in dfs and "commit-activity" in dfs:
+            _cs_df_churn = dfs["codebase-size"][
+                ["name", "slug", "value", "previousPeriodValue"]
+            ].rename(
+                columns={"value": "current_loc", "previousPeriodValue": "prev_loc"}
+            )
+            _ca_df_churn = dfs["commit-activity"][["slug", "value"]].rename(
+                columns={"value": "commits"}
+            )
+            _merged_churn = pd.merge(
+                _cs_df_churn, _ca_df_churn, on="slug", how="inner"
+            )
+            _merged_churn["net_line_change"] = (
+                _merged_churn["current_loc"] - _merged_churn["prev_loc"]
+            ).abs()
+            _merged_churn["churn_ratio_proxy"] = _merged_churn.apply(
+                lambda row: (
+                    row["commits"] / row["net_line_change"]
+                    if row["net_line_change"] > 0
+                    else row["commits"]
+                ),
+                axis=1,
+            )
+            _churn_filtered = _merged_churn[_merged_churn["commits"] > 100]
+            report_data["churn_high"] = _churn_filtered.nlargest(
+                15, "churn_ratio_proxy"
+            ).to_dict(orient="records")
+            report_data["churn_all"] = _churn_filtered.to_dict(orient="records")
+
+        # 8. Libraries vs Apps segmentation (matches Section 8)
+        if "active-organizations" in dfs and "active-contributors" in dfs:
+            _ao_df_seg = dfs["active-organizations"][
+                ["name", "slug", "value", "collectionsSlugs"]
+            ].rename(columns={"value": "active_organizations"})
+            _ac_df_seg = dfs["active-contributors"][["slug", "value"]].rename(
+                columns={"value": "active_contributors"}
+            )
+            _merged_seg = pd.merge(_ao_df_seg, _ac_df_seg, on="slug", how="inner")
+            _merged_seg["org_diversity_ratio"] = (
+                _merged_seg["active_organizations"]
+                / _merged_seg["active_contributors"]
+            )
+
+            def classify_project(row):
+                slugs = (
+                    " ".join(row["collectionsSlugs"]).lower()
+                    if isinstance(row["collectionsSlugs"], list)
+                    else ""
+                )
+                name = row["name"].lower()
+                text = slugs + " " + name
+                library_keywords = [
+                    "library",
+                    "sdk",
+                    "framework",
+                    "toolkit",
+                    "plugin",
+                    "module",
+                    "api",
+                    "standard",
+                    "spec",
+                    "protocol",
+                    "connector",
+                    "driver",
+                ]
+                app_keywords = [
+                    "platform",
+                    "application",
+                    "server",
+                    "client",
+                    "dashboard",
+                    "system",
+                    "database",
+                    "service",
+                    "desktop",
+                    "mobile",
+                    "app",
+                ]
+                is_lib = any(k in text for k in library_keywords)
+                is_app = any(k in text for k in app_keywords)
+                if is_lib and not is_app:
+                    return "Library/Tool"
+                elif is_app and not is_lib:
+                    return "End-User App"
+                elif is_lib and is_app:
+                    return "Hybrid/Platform"
+                else:
+                    return "Unclassified"
+
+            _merged_seg["type"] = _merged_seg.apply(classify_project, axis=1)
+            _hidden_gems = _merged_seg[
+                (_merged_seg["org_diversity_ratio"] > 0.5)
+                & (_merged_seg["active_organizations"] > 5)
+            ].copy()
+
+            _hidden_gems["collectionsSlugs"] = _hidden_gems[
+                "collectionsSlugs"
+            ].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
+            report_data["segmented_gems"] = _hidden_gems.nlargest(
+                30, "org_diversity_ratio"
+            ).to_dict(orient="records")
+
+        return report_data
+    return (generate_report,)
+
+
+@app.cell
+def _(generate_report, json, os):
+    os.makedirs("datastory/", exist_ok=True)
+
+    # Save to JSON file
+    report_data = generate_report()
+    with open("datastory/report_data.json", "w") as _f:
+        json.dump(report_data, _f)
+
+    print(f"Exported {len(report_data)} datasets to datastory/report_data.json")
+    print("Keys:", list(report_data.keys()))
     return
 
 

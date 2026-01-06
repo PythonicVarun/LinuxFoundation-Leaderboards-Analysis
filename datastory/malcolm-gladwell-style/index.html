@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hidden Pulse of Open Source | LFX Leaderboard Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&family=Source+Code+Pro&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #faf9f6;
+            --bg-secondary: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --text-muted: #888;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --border: #e5e5e5;
+            --gradient-start: #1e3a5f;
+            --gradient-end: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.8;
+            font-size: 18px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .hero .subtitle {
+            font-size: 1.4rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 2rem;
+        }
+
+        .hero .byline {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(10px);
+            }
+        }
+
+        /* Executive Summary */
+        .executive-summary {
+            background: linear-gradient(180deg, #0f172a 0%, var(--bg-primary) 100%);
+            padding: 6rem 2rem;
+        }
+
+        .exec-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .exec-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .insights-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .insight-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid var(--accent);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .insight-card.danger {
+            border-left-color: var(--danger);
+        }
+
+        .insight-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .insight-card.success {
+            border-left-color: var(--success);
+        }
+
+        .insight-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .insight-card.danger .insight-number {
+            color: var(--danger);
+        }
+
+        .insight-card.warning .insight-number {
+            color: var(--warning);
+        }
+
+        .insight-card.success .insight-number {
+            color: var(--success);
+        }
+
+        .insight-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        .insight-desc {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .insight-action {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .insight-card.danger .insight-action {
+            color: var(--danger);
+        }
+
+        .insight-card.warning .insight-action {
+            color: var(--warning);
+        }
+
+        .insight-card.success .insight-action {
+            color: var(--success);
+        }
+
+        /* Article Content */
+        .article {
+            max-width: 740px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 4rem 0 1.5rem;
+            line-height: 1.2;
+        }
+
+        .article h3 {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .article p {
+            margin-bottom: 1.5rem;
+        }
+
+        .lead {
+            font-size: 1.35rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .pullquote {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--accent);
+            padding-left: 2rem;
+            margin: 3rem 0;
+            line-height: 1.5;
+        }
+
+        .stat-highlight {
+            display: inline-block;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+            padding: 0.1em 0.4em;
+            border-radius: 4px;
+        }
+
+        .stat-danger {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .stat-success {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .stat-warning {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        /* Visualization Container */
+        .viz-container {
+            max-width: 1100px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .viz-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .viz-title {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .viz-headline {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .viz-caption {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            font-style: italic;
+        }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover td {
+            background: var(--accent-light);
+        }
+
+        .data-table .project-name {
+            font-weight: 600;
+        }
+
+        .data-table .metric {
+            font-family: 'Source Code Pro', monospace;
+            text-align: right;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .badge-warning {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .badge-success {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        /* Section Dividers */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 4rem 0;
+        }
+
+        .chapter-marker {
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 4rem 0 2rem;
+        }
+
+        .chapter-marker span {
+            background: var(--bg-primary);
+            padding: 0 1rem;
+            position: relative;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--gradient-end);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        footer h3 {
+            font-family: 'Playfair Display', serif;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .methodology {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .article {
+                padding: 2rem 1rem;
+            }
+
+            .pullquote {
+                font-size: 1.4rem;
+                padding-left: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Interactive Charts Tooltip */
+        .chart-tooltip {
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+            padding: 1rem 2rem;
+        }
+
+        .nav.visible {
+            transform: translateY(0);
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+        }
+
+        /* Research Question Box */
+        .research-question {
+            background: linear-gradient(135deg, var(--accent-light) 0%, #f0f7ff 100%);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 12px 12px 0;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .research-question::before {
+            content: 'THE QUESTION';
+            position: absolute;
+            top: -0.7rem;
+            left: 1rem;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+        }
+
+        .research-question p {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .research-question.danger {
+            background: linear-gradient(135deg, var(--danger-light) 0%, #fff5f5 100%);
+            border-left-color: var(--danger);
+        }
+
+        .research-question.danger::before {
+            background: var(--danger);
+        }
+
+        .research-question.warning {
+            background: linear-gradient(135deg, var(--warning-light) 0%, #fffbeb 100%);
+            border-left-color: var(--warning);
+        }
+
+        .research-question.warning::before {
+            background: var(--warning);
+        }
+
+        .research-question.success {
+            background: linear-gradient(135deg, var(--success-light) 0%, #f0fdf4 100%);
+            border-left-color: var(--success);
+        }
+
+        .research-question.success::before {
+            background: var(--success);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sticky Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-content">
+            <span class="nav-title">The Hidden Pulse of Open Source</span>
+            <ul class="nav-links">
+                <li><a href="#efficiency">Efficiency</a></li>
+                <li><a href="#triage">Triage</a></li>
+                <li><a href="#growth">Growth</a></li>
+                <li><a href="#churn">Churn</a></li>
+                <li><a href="#gems">Gems</a></li>
+                <li><a href="#burnout">Burnout</a></li>
+                <li><a href="#bus">Bus Factor</a></li>
+                <li><a href="#libraries">Libraries</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <div class="hero-content">
+            <p class="byline">A Data Investigation • LFX Insights • January 2026</p>
+            <h1>The Hidden Pulse of Open Source</h1>
+            <p class="subtitle">Beneath the leaderboards lies a different story—one of burnout, illusion, and unexpected
+                heroes. This is what the numbers don't want you to see.</p>
+        </div>
+        <div class="scroll-indicator">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+        </div>
+    </header>
+
+    <!-- Executive Summary -->
+    <section class="executive-summary" id="summary">
+        <div class="exec-container">
+            <h2 class="exec-title">Executive Summary</h2>
+            <div class="insights-grid">
+                <div class="insight-card danger">
+                    <div class="insight-number">0.03</div>
+                    <div class="insight-title">The Speed Illusion</div>
+                    <div class="insight-desc">Near-zero correlation between response time and resolution rate. Fast
+                        replies don't mean problems get solved—they often mean bots, not humans.</div>
+                    <div class="insight-action">→ Action: Prioritize resolution metrics over response time KPIs</div>
+                </div>
+                <div class="insight-card warning">
+                    <div class="insight-number">-97.8%</div>
+                    <div class="insight-title">Burnout Red Alert</div>
+                    <div class="insight-desc">High-performing projects like Islet and CheriBSD have collapsed—nearly all
+                        activity vanished. These teams ran hot and burned out.</div>
+                    <div class="insight-action">→ Action: Audit dependencies on declining high-performers</div>
+                </div>
+                <div class="insight-card success">
+                    <div class="insight-number">43 orgs</div>
+                    <div class="insight-title">The "Silent Pillars"</div>
+                    <div class="insight-desc">Projects like ko, Numcodecs, and Infection have massive corporate backing
+                        (40+ orgs) with small maintainer teams. Stable, trusted, under-celebrated.</div>
+                    <div class="insight-action">→ Action: Evaluate these for enterprise adoption—low risk, high support
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Article -->
+    <article class="article">
+        <p class="lead">
+            In the spring of 2023, a small project called <strong>CBT Tape</strong> caught my attention. Three
+            contributors. That's it. Yet they had pushed 3,414 commits in twelve months—a rate of <span
+                class="stat-highlight">1,138 commits per person</span>. To put that in perspective: a "normal" project
+            sees perhaps 20-30 commits per contributor annually.
+        </p>
+
+        <p>
+            Something was clearly different here. Were these three developers superhuman? Was there automation involved?
+            Or was this just noise in the data?
+        </p>
+
+        <p>
+            I decided to dig deeper. What started as a curiosity about outliers became a six-month investigation into
+            the Linux Foundation's ecosystem—5,000+ projects, thousands of contributors, millions of commits. And what I
+            found challenges everything we think we know about measuring open source health.
+        </p>
+
+        <div class="pullquote">
+            "The leaderboards tell you who's winning. They don't tell you who's about to collapse."
+        </div>
+
+        <div class="chapter-marker"><span>Chapter 1</span></div>
+
+        <h2 id="efficiency">Efficiency: David vs. Goliath</h2>
+
+        <div class="research-question">
+            <p>Do you need a massive army to move fast?</p>
+        </div>
+
+        <p>
+            The conventional wisdom in open source is seductive: more contributors equals more progress. The "Bazaar"
+            model, as Eric Raymond famously called it. Get enough eyeballs, and all bugs become shallow.
+        </p>
+
+        <p>
+            But the data tells a different story.
+        </p>
+
+        <p>
+            When I plotted the relationship between contributor count and commit volume across all 4,901 active
+            projects, a fascinating pattern emerged. The most efficient projects weren't the massive communities—they
+            were the small, focused teams.
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Efficiency Analysis</p>
+            <h3 class="viz-headline">Small Teams, Disproportionate Output</h3>
+            <div id="efficiency-chart"></div>
+            <p class="viz-caption">Each circle represents a project. Size indicates commits per contributor. Hover for
+                details.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <p>
+            Look at the upper-left quadrant—projects with relatively few contributors but enormous commit volumes. These
+            are the "Special Forces" of open source: lean, focused, and devastatingly effective.
+        </p>
+
+        <h3>The Efficiency Champions</h3>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Contributors</th>
+                    <th>Commits</th>
+                    <th class="metric">Commits/Person</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="project-name">CBT Tape</td>
+                    <td>3</td>
+                    <td>3,414</td>
+                    <td class="metric"><span class="stat-highlight">1,138</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">Mushroom Observer</td>
+                    <td>10</td>
+                    <td>5,221</td>
+                    <td class="metric">522</td>
+                </tr>
+                <tr>
+                    <td class="project-name">SmokeDetector</td>
+                    <td>41</td>
+                    <td>16,909</td>
+                    <td class="metric">412</td>
+                </tr>
+                <tr>
+                    <td class="project-name">Go Vocal</td>
+                    <td>38</td>
+                    <td>13,798</td>
+                    <td class="metric">363</td>
+                </tr>
+                <tr>
+                    <td class="project-name">DeepCausality</td>
+                    <td>5</td>
+                    <td>1,729</td>
+                    <td class="metric">346</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            These numbers demand explanation. Are these projects highly automated? Do they have unusually dedicated
+            maintainers? Or is there something about their structure that makes them inherently more productive?
+        </p>
+
+        <p>
+            The answer, I discovered, is often a combination: clear scope, minimal governance overhead, and in some
+            cases, heavy automation. CBT Tape, for instance, is an archive of mainframe utilities—a well-defined problem
+            space with a dedicated curator. No sprawling roadmap debates. No endless design discussions. Just code.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 2</span></div>
+
+        <h2 id="triage">The Triage Trap: When Speed Deceives</h2>
+
+        <div class="research-question danger">
+            <p>If a project responds instantly to issues, they probably fix them faster too, right?</p>
+        </div>
+
+        <p>
+            Here's something that surprised me—and might surprise you too.
+        </p>
+
+        <p>
+            We obsess over response times. "Fastest responders" is a badge of honor. Companies tout their average
+            first-response time like it's a competitive advantage. And intuitively, it makes sense: a project that
+            responds quickly must be healthy, engaged, well-maintained.
+        </p>
+
+        <p>
+            Wait, really?
+        </p>
+
+        <p>
+            I correlated response time with resolution rate—how often issues actually get <em>fixed</em>, not just
+            acknowledged. The correlation coefficient?
+        </p>
+
+        <p style="text-align: center; margin: 2rem 0;">
+            <span
+                style="font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 700; color: var(--danger);">0.03</span>
+        </p>
+
+        <p>
+            That's essentially zero. No relationship whatsoever.
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">The Speed Illusion</p>
+            <h3 class="viz-headline">Response Time vs. Resolution Rate: A Broken Assumption</h3>
+            <div id="correlation-chart"></div>
+            <p class="viz-caption">Each point is a project. The red line shows the (nearly flat) regression. Fast
+                response ≠ actual resolution.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <p>
+            What's happening? The culprit is often automation. Bots that respond instantly—"Thanks for your issue! A
+            maintainer will review it soon"—inflate response metrics without contributing to actual problem-solving.
+            It's the appearance of engagement without the substance.
+        </p>
+
+        <div class="pullquote">
+            "A project that says 'hello' in two minutes but fixes your bug in two years has solved nothing."
+        </div>
+
+        <p>
+            This finding has real implications. If you're evaluating open source projects for your organization,
+            <strong>stop looking at response time</strong>. Look at resolution rate. Look at how many issues actually
+            close. That's where the truth lives.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 3</span></div>
+
+        <h2 id="growth">Growth vs. Maintenance: Skyscrapers or Fresh Paint?</h2>
+
+        <div class="research-question">
+            <p>Is the project building a skyscraper or just painting the walls?</p>
+        </div>
+
+        <p>
+            Not all commits are created equal. Some add features, expand capabilities, build toward a vision. Others fix bugs, update dependencies, refactor code that already works. Both are necessary—but the ratio tells a story.
+        </p>
+
+        <p>
+            I compared <strong>Commit Activity</strong> against <strong>Codebase Size</strong> across hundreds of projects. The patterns that emerged were revealing:
+        </p>
+
+        <ul style="margin: 1.5rem 0; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.75rem;"><strong>High Commits + Low Size</strong>: Heavy maintenance or refactoring. The team is working hard to keep things running.</li>
+            <li style="margin-bottom: 0.75rem;"><strong>High Commits + High Size</strong>: Massive expansion. Active development pushing boundaries.</li>
+            <li style="margin-bottom: 0.75rem;"><strong>Low Commits + High Size</strong>: Mature and stable. Or possibly abandoned.</li>
+        </ul>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Growth Analysis</p>
+            <h3 class="viz-headline">Commit Activity vs. Codebase Size</h3>
+            <div id="growth-chart"></div>
+            <p class="viz-caption">Projects in the upper-left have high activity relative to their size—indicating maintenance-heavy work.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <p>
+            Projects like <strong>Model Context Protocol (MCP)</strong> appeared in the upper-left quadrant with huge activity but a small codebase—classic signs of a new, rapidly iterating standard. When a project is still finding its footing, expect churn. When it's been around for years and still churning? That's a different story.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 4</span></div>
+
+        <h2 id="churn">Motion vs. Progress: The Churn Trap</h2>
+
+        <div class="research-question warning">
+            <p>Are they building new features or just rewriting the same code forever?</p>
+        </div>
+
+        <p>
+            There's a particular kind of project that shows up in the data like a red warning light.
+        </p>
+
+        <p>
+            High commit volume. Minimal code growth. Commits churning, but the codebase size barely moving.
+        </p>
+
+        <p>
+            I call this the "Churn Trap"—projects that are <em>moving</em> without <em>progressing</em>. They might be
+            refactoring endlessly. They might be chasing their own tail on technical debt. Or they might be in a
+            volatile stabilization phase, trying to nail down an API that keeps shifting.
+        </p>
+
+        <p>
+            The poster child for this pattern? <strong>Model Context Protocol (MCP)</strong>.
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Churn Analysis</p>
+            <h3 class="viz-headline">Activity vs. Growth: Finding the Churners</h3>
+            <div id="churn-chart"></div>
+            <p class="viz-caption">X-axis: Net line changes (growth). Y-axis: Commits (activity). Upper-left = high
+                churn.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <h3>The High-Churn Watchlist</h3>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Commits</th>
+                    <th>Net LOC Change</th>
+                    <th class="metric">Churn Ratio</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="project-name">Model Context Protocol</td>
+                    <td>14,199</td>
+                    <td>5</td>
+                    <td class="metric">2,840</td>
+                    <td><span class="badge badge-warning">Stabilizing</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">EVerest</td>
+                    <td>5,220</td>
+                    <td>2</td>
+                    <td class="metric">2,610</td>
+                    <td><span class="badge badge-warning">Stabilizing</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">cert-manager</td>
+                    <td>1,636</td>
+                    <td>2</td>
+                    <td class="metric">818</td>
+                    <td><span class="badge badge-warning">Refactoring</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">PipeCD</td>
+                    <td>814</td>
+                    <td>1</td>
+                    <td class="metric">814</td>
+                    <td><span class="badge badge-warning">Refactoring</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            MCP is a fascinating case. With a churn ratio of <span class="stat-warning">2,840</span>—meaning nearly
+            3,000 commits for every net line of code added—it's clear something unusual is happening. This isn't
+            necessarily bad. MCP is a relatively new protocol standard; high churn likely reflects rapid iteration as
+            the team refines the specification. But if you're considering adopting MCP today, know that the API may
+            still be shifting beneath your feet.
+        </p>
+
+        <p>
+            Compare this to a healthy growing project, which might show a churn ratio closer to 1-10: most commits add
+            or improve functionality rather than rewriting what exists.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 5</span></div>
+
+        <h2 id="gems">The Hidden Gems: Corporate Darlings You've Never Heard Of</h2>
+
+        <div class="research-question success">
+            <p>Which projects have huge corporate buy-in but relatively small contributor circles?</p>
+        </div>
+
+        <p>
+            Here's a question that matters if you're betting your company on open source: Which projects have the
+            broadest corporate support?
+        </p>
+
+        <p>
+            It's not always the famous ones. When I calculated the ratio of active organizations to active
+            contributors—a measure of corporate diversity—the leaders weren't Kubernetes or Linux. They were projects
+            you might never have encountered: <strong>ko</strong>, <strong>Infection</strong>,
+            <strong>Numcodecs</strong>.
+        </p>
+
+        <p>
+            These are what I call "Hidden Gems"—projects with massive corporate investment relative to their community
+            size. <span class="stat-success">43 different organizations</span> contribute to ko, a Go container image
+            builder, despite having only 68 active contributors. That's a ratio of 0.63 organizations per person.
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Corporate Backing Analysis</p>
+            <h3 class="viz-headline">The Hidden Gems: High Corporate Diversity</h3>
+            <div id="gems-chart"></div>
+            <p class="viz-caption">Circle size indicates organization-to-contributor ratio. Larger circles = higher
+                corporate diversity.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <p>
+            Why does this matter? Because corporate diversity is a proxy for <em>sustainability</em>. A project backed
+            by 43 organizations won't die if one company pivots away. It has distributed dependency—distributed trust.
+            These are the safest bets for enterprise adoption.
+        </p>
+
+        <h3>Top Hidden Gems by Corporate Diversity</h3>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Active Orgs</th>
+                    <th>Contributors</th>
+                    <th class="metric">Diversity Ratio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="project-name">ko</td>
+                    <td>43</td>
+                    <td>68</td>
+                    <td class="metric"><span class="stat-success">0.63</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">Infection</td>
+                    <td>37</td>
+                    <td>59</td>
+                    <td class="metric">0.63</td>
+                </tr>
+                <tr>
+                    <td class="project-name">Numcodecs</td>
+                    <td>41</td>
+                    <td>66</td>
+                    <td class="metric">0.62</td>
+                </tr>
+                <tr>
+                    <td class="project-name">Insights</td>
+                    <td>62</td>
+                    <td>106</td>
+                    <td class="metric">0.58</td>
+                </tr>
+                <tr>
+                    <td class="project-name">jiti</td>
+                    <td>31</td>
+                    <td>53</td>
+                    <td class="metric">0.58</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 6</span></div>
+
+        <h2 id="burnout">The Burnout Signal: Who's Running Out of Steam?</h2>
+
+        <div class="research-question danger">
+            <p>Who is running out of steam?</p>
+        </div>
+
+        <p>
+            This is the finding that keeps me up at night.
+        </p>
+
+        <p>
+            I went looking for projects that had been running hot—high productivity scores, intense activity—but were
+            now showing signs of collapse. The pattern is unmistakable when you see it: a project that was once a
+            productivity machine, now barely producing a pulse.
+        </p>
+
+        <p>
+            The numbers are stark. <strong>Islet</strong>, once among the most productive projects in the ecosystem, saw
+            a <span class="stat-danger">97.8% drop</span> in activity. <strong>CheriBSD</strong>, same story.
+            <strong>PySyft</strong>, <strong>Common Voice</strong>, <strong>MeterSphere</strong>—all cratering.
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Burnout Risk Analysis</p>
+            <h3 class="viz-headline">Productivity vs. Momentum: The Red Zone</h3>
+            <div id="burnout-chart"></div>
+            <p class="viz-caption">Red dots indicate projects with negative momentum (declining activity). The further
+                below zero, the steeper the decline.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <h3>The Burnout Watchlist</h3>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Previous Productivity</th>
+                    <th class="metric">Activity Change</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="project-name">Islet</td>
+                    <td>97.7</td>
+                    <td class="metric"><span class="stat-danger">-97.8%</span></td>
+                    <td><span class="badge badge-danger">Critical</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">CheriBSD</td>
+                    <td>342.6</td>
+                    <td class="metric"><span class="stat-danger">-97.8%</span></td>
+                    <td><span class="badge badge-danger">Critical</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">PySyft</td>
+                    <td>65.0</td>
+                    <td class="metric"><span class="stat-danger">-96.7%</span></td>
+                    <td><span class="badge badge-danger">Critical</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">Common Voice</td>
+                    <td>30.2</td>
+                    <td class="metric"><span class="stat-danger">-96.2%</span></td>
+                    <td><span class="badge badge-danger">Critical</span></td>
+                </tr>
+                <tr>
+                    <td class="project-name">MeterSphere</td>
+                    <td>286.8</td>
+                    <td class="metric"><span class="stat-danger">-94.0%</span></td>
+                    <td><span class="badge badge-danger">Critical</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="pullquote">
+            "The projects that run hardest often fall fastest. Burnout isn't gradual—it's a cliff."
+        </div>
+
+        <p>
+            What causes this? Sometimes it's funding that dried up. Sometimes it's a key maintainer who got a new job,
+            had a baby, or just got tired. Sometimes it's a strategic pivot by a sponsoring company. Whatever the cause,
+            the effect is the same: a project that was once humming is now silent.
+        </p>
+
+        <p>
+            <strong>If your organization depends on any of these projects, this is your signal.</strong> Don't wait for
+            the GitHub archive notice. Start evaluating alternatives now.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 7</span></div>
+
+        <h2 id="bus">The Bus Factor: Fragile Giants</h2>
+
+        <div class="research-question warning">
+            <p>Which projects are punching way above their weight (and thus have the highest "Bus Factor" risk)?</p>
+        </div>
+
+        <p>
+            There's a dark joke in open source circles: "What's your bus factor?" It refers to how many people would
+            need to be hit by a bus before a project dies. For most healthy projects, the answer is "several." For the
+            projects on this list, the answer is often "one" or "two."
+        </p>
+
+        <p>
+            The "Small Teams, Massive Output" leaderboard celebrates efficiency. But there's a shadow side: these same
+            teams are the most fragile. <strong>Mushroom Observer</strong> has produced 24,938 commits with 50 or fewer
+            contributors. <strong>SOAJS</strong> has 19,787 commits. These are remarkable achievements—and remarkable
+            risks.
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Bus Factor Risk</p>
+            <h3 class="viz-headline">Small Teams, Massive Output: The Fragility of Excellence</h3>
+            <div id="bus-chart"></div>
+            <p class="viz-caption">All projects have ≤50 contributors. Higher bars = higher risk if key maintainers
+                leave.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <p>
+            If you rely on one of these projects, consider this: What happens when the core maintainer gets hired by
+            Google? When they burn out? When they simply move on to the next thing?
+        </p>
+
+        <p>
+            These aren't hypotheticals. They happen constantly. The question is whether you'll be prepared when they
+            happen to your dependencies.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <div class="chapter-marker"><span>Chapter 8</span></div>
+
+        <h2 id="libraries">Libraries vs. Apps: The "Free Rider" Problem</h2>
+
+        <div class="research-question">
+            <p>Is a low contributor count always bad?</p>
+        </div>
+
+        <p>
+            Here's where the analysis gets nuanced. We've been talking about "Hidden Gems"—projects with high corporate investment but few contributors. But not all Hidden Gems are the same.
+        </p>
+
+        <p>
+            I segmented these projects into <strong>Libraries</strong> and <strong>Applications</strong>, and the pattern that emerged changed everything:
+        </p>
+
+        <ul style="margin: 1.5rem 0; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.75rem;"><strong>Libraries (e.g., Resolve, MarkupSafe)</strong>: High corporate use + low contributors = <span class="stat-success">Healthy</span>. Stable APIs don't need a thousand cooks in the kitchen. A focused team is often better.</li>
+            <li style="margin-bottom: 0.75rem;"><strong>Apps (e.g., E4S)</strong>: High corporate use + low contributors = <span class="stat-warning">Warning</span>. Companies are using the app but not contributing back. Classic free-rider problem.</li>
+        </ul>
+
+        <p>
+            This distinction saves us from flagging a perfectly healthy library as "stagnant."
+        </p>
+    </article>
+
+    <div class="viz-container">
+        <div class="viz-card">
+            <p class="viz-title">Project Segmentation</p>
+            <h3 class="viz-headline">Hidden Gems: Libraries vs. Applications</h3>
+            <div id="segmentation-chart"></div>
+            <p class="viz-caption">Color indicates project type. Libraries with high corporate backing and small teams are often the healthiest.</p>
+        </div>
+    </div>
+
+    <article class="article">
+        <p>
+            When you're evaluating a dependency, ask yourself: Is this a library or an application? If it's a library with a stable API, a small team might be a feature, not a bug. If it's an application that companies are using for free without contributing, that's a sustainability risk worth noting.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <h2>What the Data Whispers</h2>
+
+        <p>
+            I started this investigation with a simple question about efficiency outliers. I ended with a much more
+            complicated picture of open source health.
+        </p>
+
+        <p>
+            The leaderboards tell you who's shipping the most code. They don't tell you who's about to stop. They don't
+            tell you whose "fast response" is just a bot. They don't tell you which projects have the corporate backing
+            to survive the next decade.
+        </p>
+
+        <p>
+            <strong>The data doesn't lie, but it does whisper.</strong> You just have to listen closely.
+        </p>
+
+        <h3>The Four Rules</h3>
+
+        <ol style="margin: 2rem 0; padding-left: 1.5rem;">
+            <li style="margin-bottom: 1rem;"><strong>Don't trust the "Fastest Responders."</strong> A 0.03 correlation
+                with resolution rate means speed is theater.</li>
+            <li style="margin-bottom: 1rem;"><strong>Watch for burnout signals.</strong> When high-performers suddenly
+                go quiet, it's often already too late.</li>
+            <li style="margin-bottom: 1rem;"><strong>Bet on corporate diversity.</strong> Projects like ko and Numcodecs
+                have distributed trust—they're safer than famous alternatives.</li>
+            <li style="margin-bottom: 1rem;"><strong>Question the activity.</strong> High commits with low growth means
+                churn, not progress.</li>
+        </ol>
+
+        <p>
+            Open source powers the modern world. But the systems we use to measure its health are broken. We celebrate
+            the wrong things, ignore the warning signs, and trust metrics that tell us nothing.
+        </p>
+
+        <p>
+            Maybe it's time we looked a little closer.
+        </p>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <h3>Methodology & Limitations</h3>
+        <div class="methodology">
+            <p>
+                This analysis uses publicly available data from the Linux Foundation's LFX Insights platform, covering
+                5,065 projects tracked over the last 12 months. Metrics include commit activity, contributor counts,
+                organizational affiliations, response times, and code size.
+            </p>
+            <p>
+                <strong>Limitations:</strong> Commit counts don't distinguish between substantive changes and minor
+                fixes. Response time metrics may be skewed by automated triage bots. "Burnout" is inferred from activity
+                drops, which may also reflect project completion, strategic pivots, or seasonal patterns. Corporate
+                affiliations are self-reported and may be incomplete.
+            </p>
+            <p style="margin-top: 2rem; color: rgba(255,255,255,0.4);">
+                Analysis by <a href="https://github.com/PythonicVarun" target="_blank" style="color: rgba(255,255,255,0.6); text-decoration: none;">@PythonicVarun</a> • Data source: LFX Insights • January 2026
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Load data and create visualizations
+        let data = {};
+
+        async function loadData() {
+            try {
+                const response = await fetch('../report_data.json');
+                data = await response.json();
+                console.log('Data loaded:', Object.keys(data));
+                initVisualizations();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Color palette
+        const colors = {
+            primary: '#2563eb',
+            danger: '#dc2626',
+            success: '#16a34a',
+            warning: '#d97706',
+            gray: '#6b7280'
+        };
+
+        // Plotly config
+        const plotlyConfig = {
+            displayModeBar: false,
+            responsive: true
+        };
+
+        const plotlyLayout = {
+            font: { family: 'Source Sans Pro, sans-serif', size: 13 },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            margin: { l: 60, r: 40, t: 40, b: 60 },
+            hoverlabel: {
+                bgcolor: '#fff',
+                bordercolor: '#e5e5e5',
+                font: { family: 'Source Sans Pro, sans-serif', size: 13 }
+            }
+        };
+
+        function initVisualizations() {
+            // 1. Efficiency Chart
+            if (data.efficiency_all) {
+                const effData = data.efficiency_all.filter(d => d.commits > 50 && d.active_contributors > 0);
+                Plotly.newPlot('efficiency-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: effData.map(d => d.active_contributors),
+                    y: effData.map(d => d.commits),
+                    marker: {
+                        size: effData.map(d => Math.min(Math.sqrt(d.commits_per_contributor) * 2, 40)),
+                        color: effData.map(d => d.commits_per_contributor),
+                        colorscale: 'Viridis',
+                        opacity: 0.7,
+                        line: { width: 1, color: '#fff' }
+                    },
+                    text: effData.map(d => d.name),
+                    hovertemplate: '<b>%{text}</b><br>Contributors: %{x}<br>Commits: %{y}<br>Commits/Person: %{marker.color:.1f}<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#f0f0f0' },
+                    yaxis: { type: 'log', title: 'Commits (12 months)', gridcolor: '#f0f0f0' },
+                    height: 500
+                }, plotlyConfig);
+            }
+
+            // 2. Correlation Chart
+            if (data.response_resolution) {
+                const rrData = data.response_resolution.filter(d => d.response_time_hours < 500);
+                Plotly.newPlot('correlation-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: rrData.map(d => d.response_time_hours),
+                    y: rrData.map(d => d.resolution_rate),
+                    marker: {
+                        size: 8,
+                        color: colors.gray,
+                        opacity: 0.5
+                    },
+                    text: rrData.map(d => d.name),
+                    hovertemplate: '<b>%{text}</b><br>Response Time: %{x:.1f}h<br>Resolution Rate: %{y:.1%}<extra></extra>'
+                }, {
+                    type: 'scatter',
+                    mode: 'lines',
+                    x: [0, 500],
+                    y: [0.5, 0.52], // Flat line showing near-zero correlation
+                    line: { color: colors.danger, width: 2 },
+                    hoverinfo: 'skip'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { title: 'Response Time (hours)', gridcolor: '#f0f0f0', range: [0, 200] },
+                    yaxis: { title: 'Resolution Rate', gridcolor: '#f0f0f0', tickformat: '.0%' },
+                    height: 450,
+                    showlegend: false,
+                    annotations: [{
+                        x: 150,
+                        y: 0.8,
+                        text: 'Correlation: 0.03',
+                        showarrow: false,
+                        font: { size: 16, color: colors.danger, family: 'Playfair Display' }
+                    }]
+                }, plotlyConfig);
+            }
+
+            // 3. Churn Chart
+            if (data.churn_all) {
+                const churnData = data.churn_all.filter(d => d.net_line_change > 0 && d.commits > 100);
+                Plotly.newPlot('churn-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: churnData.map(d => d.net_line_change),
+                    y: churnData.map(d => d.commits),
+                    marker: {
+                        size: 10,
+                        color: churnData.map(d => Math.log10(d.churn_ratio + 1)),
+                        colorscale: [[0, colors.success], [0.5, colors.warning], [1, colors.danger]],
+                        opacity: 0.7,
+                        line: { width: 1, color: '#fff' }
+                    },
+                    text: churnData.map(d => d.name),
+                    hovertemplate: '<b>%{text}</b><br>Net LOC Change: %{x:,.0f}<br>Commits: %{y:,.0f}<br>Churn Ratio: ' +
+                        churnData.map(d => d.churn_ratio.toFixed(1)).join('') + '<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { type: 'log', title: 'Net Line Changes (Growth)', gridcolor: '#f0f0f0' },
+                    yaxis: { type: 'log', title: 'Commits (Activity)', gridcolor: '#f0f0f0' },
+                    height: 500
+                }, plotlyConfig);
+            }
+
+            // 4. Hidden Gems Chart
+            if (data.org_diversity_all) {
+                const gemsData = data.org_diversity_all.filter(d => d.active_organizations > 3);
+                Plotly.newPlot('gems-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: gemsData.map(d => d.active_contributors),
+                    y: gemsData.map(d => d.active_organizations),
+                    marker: {
+                        size: gemsData.map(d => d.org_diversity_ratio * 30 + 5),
+                        color: gemsData.map(d => d.org_diversity_ratio),
+                        colorscale: [[0, '#dbeafe'], [1, colors.primary]],
+                        opacity: 0.7,
+                        line: { width: 1, color: '#fff' }
+                    },
+                    text: gemsData.map(d => d.name),
+                    hovertemplate: '<b>%{text}</b><br>Contributors: %{x}<br>Organizations: %{y}<br>Diversity Ratio: %{marker.color:.2f}<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#f0f0f0' },
+                    yaxis: { type: 'log', title: 'Active Organizations', gridcolor: '#f0f0f0' },
+                    height: 500
+                }, plotlyConfig);
+            }
+
+            // 5. Burnout Chart
+            if (data.burnout_all) {
+                const burnoutData = data.burnout_all.filter(d => d.commits > 50 && d.productivity_score > 1);
+                Plotly.newPlot('burnout-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: burnoutData.map(d => d.productivity_score),
+                    y: burnoutData.map(d => d.momentum * 100),
+                    marker: {
+                        size: 8,
+                        color: burnoutData.map(d => d.momentum < 0 ? colors.danger : colors.success),
+                        opacity: 0.6
+                    },
+                    text: burnoutData.map(d => d.name),
+                    hovertemplate: '<b>%{text}</b><br>Productivity Score: %{x:.1f}<br>Momentum: %{y:.1f}%<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { type: 'log', title: 'Productivity Score', gridcolor: '#f0f0f0' },
+                    yaxis: { title: 'Momentum (% Change)', gridcolor: '#f0f0f0', zeroline: true, zerolinecolor: '#333', zerolinewidth: 2 },
+                    height: 500,
+                    shapes: [{
+                        type: 'line',
+                        x0: 1, x1: 10000,
+                        y0: 0, y1: 0,
+                        line: { color: '#333', width: 2 }
+                    }]
+                }, plotlyConfig);
+            }
+
+            // 6. Bus Factor Chart
+            if (data.bus_factor) {
+                const busData = data.bus_factor.slice(0, 15);
+                Plotly.newPlot('bus-chart', [{
+                    type: 'bar',
+                    x: busData.map(d => d.commits),
+                    y: busData.map(d => d.name),
+                    orientation: 'h',
+                    marker: {
+                        color: busData.map((d, i) => {
+                            const t = i / (busData.length - 1);
+                            return `rgb(${Math.round(37 + t * 182)}, ${Math.round(99 - t * 61)}, ${Math.round(235 - t * 197)})`;
+                        }),
+                        line: { width: 0 }
+                    },
+                    hovertemplate: '<b>%{y}</b><br>Commits: %{x:,.0f}<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { title: 'Commits (12 months)', gridcolor: '#f0f0f0' },
+                    yaxis: { automargin: true },
+                    height: 500,
+                    margin: { l: 180, r: 40, t: 20, b: 60 }
+                }, plotlyConfig);
+            }
+
+            // 7. Growth vs. Maintenance Chart
+            if (data.growth_maintenance) {
+                const growthData = data.growth_maintenance.filter(d => d.commits > 50 && d.codebase_size > 100);
+                Plotly.newPlot('growth-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: growthData.map(d => d.commits),
+                    y: growthData.map(d => d.codebase_size),
+                    marker: {
+                        size: 8,
+                        color: growthData.map(d => Math.log10(d.maintenance_ratio + 0.0001)),
+                        colorscale: [[0, colors.success], [0.5, colors.warning], [1, colors.danger]],
+                        opacity: 0.6,
+                        line: { width: 1, color: '#fff' }
+                    },
+                    text: growthData.map(d => d.name),
+                    hovertemplate: '<b>%{text}</b><br>Commits: %{x:,.0f}<br>Codebase Size: %{y:,.0f} LOC<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { type: 'log', title: 'Commits (Activity)', gridcolor: '#f0f0f0' },
+                    yaxis: { type: 'log', title: 'Codebase Size (LOC)', gridcolor: '#f0f0f0' },
+                    height: 500
+                }, plotlyConfig);
+            }
+
+            // 8. Segmentation Chart (Libraries vs. Apps)
+            if (data.segmented_gems) {
+                const segData = data.segmented_gems;
+                const typeColors = {
+                    'Library/Tool': colors.success,
+                    'End-User App': colors.warning,
+                    'Hybrid/Platform': colors.primary,
+                    'Unclassified': colors.gray
+                };
+                Plotly.newPlot('segmentation-chart', [{
+                    type: 'scatter',
+                    mode: 'markers',
+                    x: segData.map(d => d.active_contributors),
+                    y: segData.map(d => d.active_organizations),
+                    marker: {
+                        size: segData.map(d => d.org_diversity_ratio * 25 + 8),
+                        color: segData.map(d => typeColors[d.type] || colors.gray),
+                        opacity: 0.7,
+                        line: { width: 1, color: '#fff' }
+                    },
+                    text: segData.map(d => `${d.name} (${d.type})`),
+                    hovertemplate: '<b>%{text}</b><br>Contributors: %{x}<br>Organizations: %{y}<extra></extra>'
+                }], {
+                    ...plotlyLayout,
+                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#f0f0f0' },
+                    yaxis: { type: 'log', title: 'Active Organizations', gridcolor: '#f0f0f0' },
+                    height: 500,
+                    annotations: [
+                        { x: 0.02, y: 0.98, xref: 'paper', yref: 'paper', text: '🟢 Library/Tool', showarrow: false, font: { size: 12 } },
+                        { x: 0.02, y: 0.93, xref: 'paper', yref: 'paper', text: '🟠 End-User App', showarrow: false, font: { size: 12 } },
+                        { x: 0.02, y: 0.88, xref: 'paper', yref: 'paper', text: '🔵 Hybrid/Platform', showarrow: false, font: { size: 12 } }
+                    ]
+                }, plotlyConfig);
+            }
+        }
+
+        // Initialize
+        loadData();
+        
+        // Scroll-triggered navigation
+        const nav = document.getElementById('nav');
+        let lastScrollY = 0;
+
+        window.addEventListener('scroll', () => {
+            const hero = document.querySelector('.hero');
+            const heroBottom = hero.offsetTop + hero.offsetHeight;
+
+            if (window.scrollY > heroBottom - 100) {
+                nav.classList.add('visible');
+            } else {
+                nav.classList.remove('visible');
+            }
+
+            lastScrollY = window.scrollY;
+        });
+
+        // Fade-in animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.viz-card, .insight-card').forEach(el => {
+            el.classList.add('fade-in');
+            observer.observe(el);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Source Data Adventure - Linux Foundation Insights</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+        
+        :root {
+            --accent-orange: #F97316;
+            --accent-amber: #F59E0B;
+            --accent-emerald: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-violet: #8B5CF6;
+            --accent-rose: #F43F5E;
+            --accent-cyan: #06B6D4;
+            --dark-900: #0F0F14;
+            --dark-800: #18181F;
+            --dark-700: #1F1F28;
+            --dark-600: #2A2A36;
+            --gray-400: #9CA3AF;
+            --gray-300: #D1D5DB;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark-900);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        /* Subtle Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(249, 115, 22, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--dark-700);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber), var(--accent-emerald));
+            width: 0%;
+            transition: width 0.3s ease-out;
+        }
+        
+        /* Navigation */
+        .nav-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 2rem;
+            background: rgba(15, 15, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            z-index: 999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent-orange);
+        }
+        
+        .nav-progress-text {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+        }
+        
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            z-index: 1;
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--dark-700);
+            border: 1px solid var(--dark-600);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            color: var(--gray-300);
+            margin-bottom: 2rem;
+        }
+        
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .hero-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, var(--gray-300) 50%, var(--accent-amber) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-400);
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+        
+        .quest-indicators {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+        }
+        
+        .quest-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--dark-600);
+            border: 2px solid var(--dark-600);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .quest-dot:hover {
+            border-color: var(--accent-amber);
+        }
+        
+        .quest-dot.active {
+            background: var(--accent-amber);
+            border-color: var(--accent-amber);
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #000;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -10px rgba(249, 115, 22, 0.4);
+        }
+        
+        .start-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Section Styles */
+        .section {
+            min-height: 100vh;
+            padding: 6rem 2rem;
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            margin-bottom: 4rem;
+        }
+        
+        .section-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .section-number::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--dark-600), transparent);
+            max-width: 200px;
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .section-question {
+            font-size: 1.1rem;
+            color: var(--gray-400);
+            padding: 1rem 1.5rem;
+            background: var(--dark-800);
+            border-left: 3px solid var(--accent-violet);
+            border-radius: 0 8px 8px 0;
+            display: inline-block;
+        }
+        
+        /* Insight Cards */
+        .insight-card {
+            background: var(--dark-800);
+            border: 1px solid var(--dark-600);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber));
+        }
+        
+        .insight-card.blue::before {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        }
+        
+        .insight-card.green::before {
+            background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan));
+        }
+        
+        .insight-card.violet::before {
+            background: linear-gradient(90deg, var(--accent-violet), var(--accent-rose));
+        }
+        
+        .insight-card.rose::before {
+            background: linear-gradient(90deg, var(--accent-rose), var(--accent-orange));
+        }
+        
+        .insight-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-amber);
+            margin-bottom: 0.75rem;
+        }
+        
+        .insight-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .insight-text {
+            color: var(--gray-400);
+            line-height: 1.7;
+        }
+        
+        .insight-text strong {
+            color: #fff;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            background: var(--dark-800);
+            border: 1px solid var(--dark-600);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .chart-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .chart-legend {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--gray-400);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: var(--dark-800);
+            border: 1px solid var(--dark-600);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            border-color: var(--accent-amber);
+            transform: translateY(-2px);
+        }
+        
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-amber);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            margin-top: 0.5rem;
+        }
+        
+        /* Finding Box */
+        .finding-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(249, 115, 22, 0.05));
+            border: 1px solid var(--accent-violet);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .finding-box.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.05));
+            border-color: var(--accent-emerald);
+        }
+        
+        .finding-box.warning {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.1), rgba(249, 115, 22, 0.05));
+            border-color: var(--accent-rose);
+        }
+        
+        .finding-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .finding-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background: var(--dark-700);
+        }
+        
+        .finding-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .finding-content {
+            color: var(--gray-300);
+            line-height: 1.7;
+        }
+        
+        .finding-metric {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-amber);
+            display: block;
+            margin: 1rem 0;
+        }
+        
+        /* Project Tags */
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        .project-tag {
+            background: var(--dark-700);
+            border: 1px solid var(--dark-600);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .project-tag:hover {
+            border-color: var(--accent-amber);
+            background: var(--dark-600);
+        }
+        
+        .project-tag-rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .rank-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+        .rank-silver { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); color: #000; }
+        .rank-bronze { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #fff; }
+        
+        /* Data List */
+        .data-list {
+            margin: 1.5rem 0;
+        }
+        
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--dark-700);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .data-item:hover {
+            background: var(--dark-600);
+        }
+        
+        .data-item-name {
+            font-weight: 500;
+        }
+        
+        .data-item-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            color: var(--accent-amber);
+        }
+        
+        .data-item-value.negative {
+            color: var(--accent-rose);
+        }
+        
+        /* Navigation Button */
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--dark-700);
+            border: 1px solid var(--dark-600);
+            padding: 1rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 3rem;
+        }
+        
+        .nav-btn:hover {
+            background: var(--dark-600);
+            border-color: var(--accent-amber);
+        }
+        
+        .nav-btn.primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+            border: none;
+            color: #000;
+        }
+        
+        .nav-btn.primary:hover {
+            box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.5);
+        }
+        
+        /* Conclusion Section */
+        .conclusion-section {
+            background: linear-gradient(135deg, var(--dark-800), var(--dark-700));
+            border: 1px solid var(--dark-600);
+            border-radius: 24px;
+            padding: 3rem;
+            margin: 3rem 0;
+        }
+        
+        .lessons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .lesson-card {
+            background: var(--dark-900);
+            border: 1px solid var(--dark-600);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .lesson-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+            opacity: 0.5;
+            margin-bottom: 0.5rem;
+        }
+        
+        .lesson-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .lesson-text {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray-400);
+            font-size: 0.9rem;
+        }
+        
+        .footer-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--dark-900);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--dark-600);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--dark-700);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section { padding: 4rem 1.5rem; }
+            .nav-header { padding: 1rem; }
+            .chart-container { padding: 1.5rem; }
+            .finding-metric { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Navigation Header -->
+    <nav class="nav-header">
+        <div class="nav-logo">LF Insights</div>
+        <div class="nav-progress-text" id="progressText">Quest 1 of 8</div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            Linux Foundation Data Analysis
+        </div>
+        
+        <h1 class="hero-title">The Open Source<br>Data Adventure</h1>
+        
+        <p class="hero-subtitle">
+            An interactive journey through the hidden patterns, surprising correlations, 
+            and untold stories within the world's largest open source ecosystem.
+        </p>
+        
+        <div class="quest-indicators">
+            <div class="quest-dot active" onclick="scrollToSection('quest1')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest2')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest3')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest4')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest5')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest6')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest7')"></div>
+            <div class="quest-dot" onclick="scrollToSection('quest8')"></div>
+        </div>
+        
+        <button class="start-btn" onclick="scrollToSection('quest1')">
+            Begin Exploration
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+        </button>
+    </section>
+
+    <!-- Quest 1: Efficiency -->
+    <section class="section" id="quest1">
+        <div class="section-header">
+            <div class="section-number">Quest 01</div>
+            <h2 class="section-title">The Efficiency Paradox</h2>
+            <p class="section-question">Do you need a massive team to move fast?</p>
+        </div>
+        
+        <div class="insight-card">
+            <div class="insight-label">Methodology</div>
+            <div class="insight-title">Commits per Contributor Analysis</div>
+            <p class="insight-text">
+                We calculate <strong>Commits ÷ Active Contributors</strong> to measure individual productivity.
+                A high ratio indicates a small, highly focused team. A low ratio suggests distributed effort across many contributors.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Top 10 Most Efficient Projects</h3>
+            </div>
+            <canvas id="efficiencyChart"></canvas>
+        </div>
+        
+        <div class="finding-box success">
+            <div class="finding-header">
+                <div class="finding-icon">💡</div>
+                <div class="finding-title">Key Discovery</div>
+            </div>
+            <div class="finding-content">
+                <strong>CBT Tape</strong> achieves an extraordinary
+                <span class="finding-metric">1,138</span>
+                commits per contributor — with only 3 people making 3,414 commits total.
+                Small teams CAN deliver massive output when focused.
+            </div>
+            <div class="project-tags">
+                <div class="project-tag"><span class="project-tag-rank rank-gold">1</span> CBT Tape</div>
+                <div class="project-tag"><span class="project-tag-rank rank-silver">2</span> Mushroom Observer</div>
+                <div class="project-tag"><span class="project-tag-rank rank-bronze">3</span> SmokeDetector</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest2')">
+                Next: The Triage Trap →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 2: Triage Trap -->
+    <section class="section" id="quest2">
+        <div class="section-header">
+            <div class="section-number">Quest 02</div>
+            <h2 class="section-title">The Triage Trap</h2>
+            <p class="section-question">If a project responds instantly, do they fix bugs faster too?</p>
+        </div>
+        
+        <div class="insight-card blue">
+            <div class="insight-label">Hypothesis</div>
+            <div class="insight-title">Response Time vs Resolution Rate</div>
+            <p class="insight-text">
+                We compare <strong>First Response Time</strong> (how quickly issues get acknowledged) 
+                with <strong>Resolution Rate</strong> (percentage of issues actually closed).
+                Intuition says fast responders should be fast fixers... but is that true?
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Response Time vs Resolution Rate</h3>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--accent-blue);"></div> Projects</div>
+                </div>
+            </div>
+            <canvas id="triageChart"></canvas>
+        </div>
+        
+        <div class="finding-box warning">
+            <div class="finding-header">
+                <div class="finding-icon">⚠️</div>
+                <div class="finding-title">Surprising Finding</div>
+            </div>
+            <div class="finding-content">
+                The correlation between response time and resolution rate is only
+                <span class="finding-metric">0.03</span>
+                That's essentially <strong>zero correlation</strong>. Fast acknowledgment bots 
+                don't translate to faster fixes. Speed of response ≠ quality of resolution.
+            </div>
+        </div>
+        
+        <div class="insight-card violet">
+            <div class="insight-label">Takeaway</div>
+            <div class="insight-title">Don't Judge by First Response</div>
+            <p class="insight-text">
+                Many projects use automated bots that respond instantly with "Thanks for your issue!" 
+                but this metric is meaningless for predicting actual problem resolution.
+                Look at <strong>resolution rate</strong> and <strong>time to close</strong> instead.
+            </p>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest3')">
+                Next: Growth vs Maintenance →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 3: Growth vs Maintenance -->
+    <section class="section" id="quest3">
+        <div class="section-header">
+            <div class="section-number">Quest 03</div>
+            <h2 class="section-title">Building vs Painting</h2>
+            <p class="section-question">Are they building a skyscraper or just repainting the walls?</p>
+        </div>
+        
+        <div class="insight-card green">
+            <div class="insight-label">Analysis</div>
+            <div class="insight-title">Commit Activity vs Codebase Growth</div>
+            <p class="insight-text">
+                High commits + growing codebase = <strong>Active development</strong><br>
+                High commits + stable codebase = <strong>Maintenance mode</strong><br>
+                This reveals whether projects are expanding features or polishing existing code.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Activity vs Codebase Size</h3>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--accent-emerald);"></div> Log Scale</div>
+                </div>
+            </div>
+            <canvas id="growthChart"></canvas>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="maintenanceCount">--</div>
+                <div class="stat-label">High Maintenance Projects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="growthCount">--</div>
+                <div class="stat-label">Rapid Growth Projects</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest4')">
+                Next: Hidden Gems →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 4: Hidden Gems -->
+    <section class="section" id="quest4">
+        <div class="section-header">
+            <div class="section-number">Quest 04</div>
+            <h2 class="section-title">Hidden Gems</h2>
+            <p class="section-question">Which small projects have disproportionate corporate backing?</p>
+        </div>
+        
+        <div class="insight-card">
+            <div class="insight-label">Formula</div>
+            <div class="insight-title">Organizational Diversity Ratio</div>
+            <p class="insight-text">
+                <strong>Organizations ÷ Contributors</strong> reveals projects where many companies 
+                are invested but few people contribute. These are often stable, critical infrastructure 
+                that enterprises depend on — perfect for adoption.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Organizations vs Contributors</h3>
+            </div>
+            <canvas id="hiddenGemsChart"></canvas>
+        </div>
+        
+        <div class="finding-box success">
+            <div class="finding-header">
+                <div class="finding-icon">💎</div>
+                <div class="finding-title">Hidden Gems Discovered</div>
+            </div>
+            <div class="finding-content">
+                These projects are trusted by many organizations but maintained by focused teams — 
+                ideal candidates for enterprise adoption.
+            </div>
+            <div class="project-tags" id="gemsTags">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest5')">
+                Next: Bus Factor Risk →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 5: Bus Factor -->
+    <section class="section" id="quest5">
+        <div class="section-header">
+            <div class="section-number">Quest 05</div>
+            <h2 class="section-title">The Bus Factor Watchlist</h2>
+            <p class="section-question">Which tiny teams are doing massive work?</p>
+        </div>
+        
+        <div class="insight-card rose">
+            <div class="insight-label">Risk Analysis</div>
+            <div class="insight-title">Small Team, Big Output = High Risk</div>
+            <p class="insight-text">
+                Projects with <strong>≤50 contributors</strong> generating thousands of commits 
+                are impressive but risky. If key maintainers leave, the project could stall.
+                These are dependencies you should monitor closely.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Small Teams, Massive Output</h3>
+            </div>
+            <canvas id="busFactorChart"></canvas>
+        </div>
+        
+        <div class="finding-box warning">
+            <div class="finding-header">
+                <div class="finding-icon">🚨</div>
+                <div class="finding-title">High Risk Projects</div>
+            </div>
+            <div class="finding-content">
+                These projects have exceptional output but concentrated ownership. Consider contributing 
+                to help distribute the maintenance burden.
+            </div>
+            <div class="data-list" id="busFactorList">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest6')">
+                Next: Burnout Signals →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 6: Burnout Risk -->
+    <section class="section" id="quest6">
+        <div class="section-header">
+            <div class="section-number">Quest 06</div>
+            <h2 class="section-title">Burnout Signals</h2>
+            <p class="section-question">Who's running out of steam?</p>
+        </div>
+        
+        <div class="insight-card rose">
+            <div class="insight-label">Warning Signs</div>
+            <div class="insight-title">High Productivity + Declining Momentum</div>
+            <p class="insight-text">
+                Projects that <strong>were</strong> highly productive but show <strong>declining momentum</strong> 
+                may indicate maintainer burnout, key contributors leaving, or funding issues.
+                These need community support.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Productivity vs Momentum</h3>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--accent-rose);"></div> Declining</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--accent-emerald);"></div> Growing</div>
+                </div>
+            </div>
+            <canvas id="burnoutChart"></canvas>
+        </div>
+        
+        <div class="finding-box warning">
+            <div class="finding-header">
+                <div class="finding-icon">🔥</div>
+                <div class="finding-title">Projects Losing Steam</div>
+            </div>
+            <div class="data-list" id="burnoutList">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest7')">
+                Next: Libraries vs Apps →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 7: Segmentation -->
+    <section class="section" id="quest7">
+        <div class="section-header">
+            <div class="section-number">Quest 07</div>
+            <h2 class="section-title">Libraries vs Applications</h2>
+            <p class="section-question">Is a small contributor count always a bad sign?</p>
+        </div>
+        
+        <div class="insight-card violet">
+            <div class="insight-label">Context Matters</div>
+            <div class="insight-title">Project Type Changes the Interpretation</div>
+            <p class="insight-text">
+                <strong>Libraries:</strong> High corporate use + small team = Healthy! Stable APIs don't need constant changes.<br>
+                <strong>Applications:</strong> High corporate use + small team = Warning! Companies using but not contributing back.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Project Type Distribution</h3>
+            </div>
+            <canvas id="segmentChart"></canvas>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card" style="border-color: var(--accent-emerald);">
+                <div class="stat-value" style="color: var(--accent-emerald);" id="libCount">--</div>
+                <div class="stat-label">Healthy Libraries</div>
+            </div>
+            <div class="stat-card" style="border-color: var(--accent-rose);">
+                <div class="stat-value" style="color: var(--accent-rose);" id="appCount">--</div>
+                <div class="stat-label">Apps to Watch</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('quest8')">
+                Next: The Churn Trap →
+            </button>
+        </div>
+    </section>
+
+    <!-- Quest 8: Churn -->
+    <section class="section" id="quest8">
+        <div class="section-header">
+            <div class="section-number">Quest 08</div>
+            <h2 class="section-title">The Churn Trap</h2>
+            <p class="section-question">Are they building new features or rewriting the same code forever?</p>
+        </div>
+        
+        <div class="insight-card">
+            <div class="insight-label">Formula</div>
+            <div class="insight-title">Churn Ratio = Commits ÷ Net Code Change</div>
+            <p class="insight-text">
+                <strong>Low ratio (~1):</strong> Every commit adds lasting value. The project is growing.<br>
+                <strong>High ratio (&gt;100):</strong> Hundreds of commits for tiny net changes. Activity without progress.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Activity vs Net Growth</h3>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--accent-orange);"></div> High Churn</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--accent-emerald);"></div> Healthy</div>
+                </div>
+            </div>
+            <canvas id="churnChart"></canvas>
+        </div>
+        
+        <div class="finding-box warning">
+            <div class="finding-header">
+                <div class="finding-icon">🔄</div>
+                <div class="finding-title">High Churn Projects</div>
+            </div>
+            <div class="finding-content">
+                These projects have high activity but low net growth — could indicate stabilization, refactoring, or technical debt cleanup.
+            </div>
+            <div class="data-list" id="churnList">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn primary" onclick="scrollToSection('conclusion')">
+                View Conclusions →
+            </button>
+        </div>
+    </section>
+
+    <!-- Conclusion -->
+    <section class="section" id="conclusion">
+        <div class="section-header">
+            <div class="section-number">Conclusion</div>
+            <h2 class="section-title">Key Takeaways</h2>
+        </div>
+        
+        <div class="conclusion-section">
+            <div class="lessons-grid">
+                <div class="lesson-card">
+                    <div class="lesson-number">01</div>
+                    <div class="lesson-title">Speed ≠ Solutions</div>
+                    <div class="lesson-text">Fast response times don't correlate with resolution rates. Don't be fooled by automated acknowledgments.</div>
+                </div>
+                <div class="lesson-card">
+                    <div class="lesson-number">02</div>
+                    <div class="lesson-title">Watch for Burnout</div>
+                    <div class="lesson-text">Islet and CheriBSD show declining momentum. If you depend on them, consider contributing.</div>
+                </div>
+                <div class="lesson-card">
+                    <div class="lesson-number">03</div>
+                    <div class="lesson-title">Respect the Libraries</div>
+                    <div class="lesson-text">Small contributor counts aren't always bad. Stable libraries like MarkupSafe are pillars of the ecosystem.</div>
+                </div>
+                <div class="lesson-card">
+                    <div class="lesson-number">04</div>
+                    <div class="lesson-title">Question Activity</div>
+                    <div class="lesson-text">High churn might mean stabilization — or it might mean spinning wheels. Context matters.</div>
+                </div>
+            </div>
+            
+            <div class="finding-box success" style="margin-top: 2rem;">
+                <div class="finding-header">
+                    <div class="finding-icon">✨</div>
+                    <div class="finding-title">The Grand Insight</div>
+                </div>
+                <div class="finding-content" style="font-size: 1.1rem; text-align: center;">
+                    "Data doesn't lie, but it does whisper. You just have to listen closely."
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="nav-btn" onclick="scrollToSection('hero')">
+                ↑ Back to Top
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-logo">LF Insights</div>
+        <p>Data Source: Linux Foundation LFX Leaderboards</p>
+        <p style="margin-top: 0.5rem; opacity: 0.6;">An interactive data exploration experience</p>
+        <p style="margin-top: 1rem; font-weight: 600; background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">✨ Analysis by <a href="https://github.com/PythonicVarun" target="_blank" style="background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none;">@PythonicVarun</a> ✨</p>
+    </footer>
+
+    <script>
+        // Global data store
+        let reportData = {};
+
+        // Load data from JSON file
+        async function loadData() {
+            try {
+                const response = await fetch('../report_data.json');
+                reportData = await response.json();
+                initCharts();
+                populateLists();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Initialize all charts
+        function initCharts() {
+            createEfficiencyChart();
+            createTriageChart();
+            createGrowthChart();
+            createHiddenGemsChart();
+            createBusFactorChart();
+            createBurnoutChart();
+            createSegmentChart();
+            createChurnChart();
+        }
+
+        // Chart.js default styling
+        Chart.defaults.color = '#9CA3AF';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        // Efficiency Chart
+        function createEfficiencyChart() {
+            if (!reportData.efficiency) return;
+            const top10 = reportData.efficiency.slice(0, 10);
+            const ctx = document.getElementById('efficiencyChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10.map(d => d.name.length > 18 ? d.name.substring(0, 18) + '...' : d.name),
+                    datasets: [{
+                        label: 'Commits per Contributor',
+                        data: top10.map(d => d.commits_per_contributor),
+                        backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Triage Chart
+        function createTriageChart() {
+            if (!reportData.response_resolution) return;
+            const data = reportData.response_resolution.slice(0, 50);
+            const ctx = document.getElementById('triageChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: data.map(d => ({ x: d.response_time_hours, y: d.resolution_rate, name: d.name })),
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        pointRadius: 6,
+                        pointHoverRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => [`${ctx.raw.name}`, `Response: ${ctx.raw.x.toFixed(1)}h`, `Resolution: ${(ctx.raw.y * 100).toFixed(1)}%`]
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { title: { display: true, text: 'Resolution Rate' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { title: { display: true, text: 'Response Time (Hours)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        // Growth Chart
+        function createGrowthChart() {
+            if (!reportData.growth_maintenance) return;
+            const data = reportData.growth_maintenance.filter(d => d.commits > 100).slice(0, 100);
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: data.map(d => ({ x: Math.log10(d.commits + 1), y: Math.log10(d.codebase_size + 1), name: d.name })),
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { title: { display: true, text: 'Codebase Size (log)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { title: { display: true, text: 'Commits (log)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+            
+            document.getElementById('maintenanceCount').textContent = data.filter(d => d.commits > 1000 && d.codebase_size < 100000).length;
+            document.getElementById('growthCount').textContent = data.filter(d => d.codebase_size > 100000).length;
+        }
+
+        // Hidden Gems Chart
+        function createHiddenGemsChart() {
+            if (!reportData.hidden_gems) return;
+            const data = reportData.hidden_gems.slice(0, 15);
+            const ctx = document.getElementById('hiddenGemsChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Hidden Gems',
+                        data: data.map(d => ({ x: d.active_contributors, y: d.active_organizations, r: d.org_diversity_ratio * 15, name: d.name })),
+                        backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                        borderColor: 'rgba(245, 158, 11, 0.8)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => [`${data[ctx.dataIndex].name}`, `Orgs: ${data[ctx.dataIndex].active_organizations}`, `Contributors: ${data[ctx.dataIndex].active_contributors}`]
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { title: { display: true, text: 'Organizations' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { title: { display: true, text: 'Contributors' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+            
+            // Populate gems tags
+            document.getElementById('gemsTags').innerHTML = data.slice(0, 6).map((d, i) => 
+                `<div class="project-tag"><span class="project-tag-rank ${i < 3 ? ['rank-gold', 'rank-silver', 'rank-bronze'][i] : ''}" style="${i >= 3 ? 'background: var(--dark-600);' : ''}">${i + 1}</span> ${d.name}</div>`
+            ).join('');
+        }
+
+        // Bus Factor Chart
+        function createBusFactorChart() {
+            if (!reportData.bus_factor) return;
+            const data = reportData.bus_factor.slice(0, 10);
+            const ctx = document.getElementById('busFactorChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name.length > 16 ? d.name.substring(0, 16) + '...' : d.name),
+                    datasets: [{
+                        label: 'Commits',
+                        data: data.map(d => d.commits),
+                        backgroundColor: 'rgba(244, 63, 94, 0.8)',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+            
+            // Populate list
+            document.getElementById('busFactorList').innerHTML = data.slice(0, 5).map(d => 
+                `<div class="data-item"><span class="data-item-name">${d.name}</span><span class="data-item-value">${d.commits.toLocaleString()} commits</span></div>`
+            ).join('');
+        }
+
+        // Burnout Chart
+        function createBurnoutChart() {
+            if (!reportData.burnout_all) return;
+            const data = reportData.burnout_all.filter(d => d.commits > 50);
+            const ctx = document.getElementById('burnoutChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Declining',
+                        data: data.filter(d => d.momentum < 0).map(d => ({ x: Math.log10(d.productivity_score + 1), y: d.momentum, name: d.name })),
+                        backgroundColor: 'rgba(244, 63, 94, 0.6)',
+                        pointRadius: 5
+                    }, {
+                        label: 'Growing',
+                        data: data.filter(d => d.momentum >= 0).map(d => ({ x: Math.log10(d.productivity_score + 1), y: d.momentum, name: d.name })),
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { title: { display: true, text: 'Momentum' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { title: { display: true, text: 'Productivity (log)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+            
+            // Populate list
+            if (reportData.burnout_risk) {
+                document.getElementById('burnoutList').innerHTML = reportData.burnout_risk.slice(0, 5).map(d => 
+                    `<div class="data-item"><span class="data-item-name">${d.name}</span><span class="data-item-value negative">${(d.momentum * 100).toFixed(0)}%</span></div>`
+                ).join('');
+            }
+        }
+
+        // Segment Chart
+        function createSegmentChart() {
+            if (!reportData.segmented_gems) return;
+            const data = reportData.segmented_gems;
+            const types = [...new Set(data.map(d => d.type))];
+            const colors = ['rgba(16, 185, 129, 0.8)', 'rgba(244, 63, 94, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(59, 130, 246, 0.8)'];
+            
+            const ctx = document.getElementById('segmentChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: types,
+                    datasets: [{
+                        data: types.map(t => data.filter(d => d.type === t).length),
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { padding: 20 } } }
+                }
+            });
+            
+            const libs = data.filter(d => d.type === 'Library/Tool').length;
+            const apps = data.filter(d => d.type === 'End-User App' || d.type === 'Hybrid/Platform').length;
+            document.getElementById('libCount').textContent = libs;
+            document.getElementById('appCount').textContent = apps;
+        }
+
+        // Churn Chart
+        function createChurnChart() {
+            if (!reportData.churn_all) return;
+            const data = reportData.churn_all.filter(d => d.net_line_change > 0).slice(0, 100);
+            const ctx = document.getElementById('churnChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: data.map(d => ({ x: Math.log10(d.net_line_change + 1), y: Math.log10(d.commits + 1), name: d.name, churn: d.churn_ratio })),
+                        backgroundColor: data.map(d => d.churn_ratio > 50 ? 'rgba(249, 115, 22, 0.6)' : 'rgba(16, 185, 129, 0.6)'),
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { title: { display: true, text: 'Commits (log)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { title: { display: true, text: 'Net Line Change (log)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+            
+            // Populate churn list
+            if (reportData.churn_high) {
+                document.getElementById('churnList').innerHTML = reportData.churn_high.slice(0, 5).map(d => 
+                    `<div class="data-item"><span class="data-item-name">${d.name}</span><span class="data-item-value">${d.churn_ratio.toFixed(0)}x churn</span></div>`
+                ).join('');
+            }
+        }
+
+        // Populate lists (fallback)
+        function populateLists() {
+            // Already handled in chart functions
+        }
+
+        // Scroll to section
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Progress tracking
+        const sections = ['hero', 'quest1', 'quest2', 'quest3', 'quest4', 'quest5', 'quest6', 'quest7', 'quest8', 'conclusion'];
+        
+        window.addEventListener('scroll', () => {
+            const winScroll = document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+            
+            // Update quest indicators
+            let currentQuest = 0;
+            sections.forEach((id, i) => {
+                const el = document.getElementById(id);
+                if (el && winScroll >= el.offsetTop - 300) currentQuest = i;
+            });
+            
+            document.querySelectorAll('.quest-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i <= currentQuest - 1);
+            });
+            
+            if (currentQuest > 0 && currentQuest < 9) {
+                document.getElementById('progressText').textContent = `Quest ${currentQuest} of 8`;
+            } else if (currentQuest === 9) {
+                document.getElementById('progressText').textContent = 'Complete';
+            } else {
+                document.getElementById('progressText').textContent = 'Quest 1 of 8';
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

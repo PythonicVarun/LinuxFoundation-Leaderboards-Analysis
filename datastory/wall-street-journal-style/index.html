@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hidden Economics of Open Source | A Wall Street Journal Data Investigation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <style>
+        :root {
+            --wsj-black: #111111;
+            --wsj-dark-gray: #333333;
+            --wsj-mid-gray: #666666;
+            --wsj-light-gray: #999999;
+            --wsj-border: #d4d4d4;
+            --wsj-bg-light: #f7f7f7;
+            --wsj-accent: #0274b6;
+            --wsj-accent-dark: #015c8f;
+            --wsj-warning: #c73e1d;
+            --wsj-success: #2e7d32;
+            --font-serif: "Exchange", Georgia, "Times New Roman", serif;
+            --font-sans: "Retina", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            background: #ffffff;
+            color: var(--wsj-black);
+            line-height: 1.6;
+            font-size: 18px;
+        }
+
+        /* Header */
+        .masthead {
+            border-bottom: 1px solid var(--wsj-border);
+            padding: 12px 0;
+            text-align: center;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .masthead-logo {
+            font-family: var(--font-serif);
+            font-size: 14px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--wsj-mid-gray);
+        }
+
+        /* Hero Section */
+        .hero {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 24px 40px;
+            border-bottom: 3px double var(--wsj-border);
+        }
+
+        .kicker {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--wsj-accent);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .headline {
+            font-family: var(--font-serif);
+            font-size: clamp(32px, 5vw, 52px);
+            font-weight: 400;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            color: var(--wsj-black);
+        }
+
+        .deck {
+            font-size: 22px;
+            color: var(--wsj-mid-gray);
+            line-height: 1.5;
+            max-width: 700px;
+        }
+
+        .byline {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--wsj-border);
+            font-family: var(--font-sans);
+            font-size: 14px;
+        }
+
+        .byline-author {
+            font-weight: 700;
+            color: var(--wsj-black);
+        }
+
+        .byline-date {
+            color: var(--wsj-light-gray);
+            margin-top: 4px;
+        }
+
+        /* Main Content */
+        .article-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .lead-paragraph {
+            font-size: 21px;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .lead-paragraph::first-letter {
+            font-size: 4.5em;
+            float: left;
+            line-height: 0.8;
+            margin: 0.05em 0.1em 0 0;
+            font-weight: 400;
+        }
+
+        p {
+            margin-bottom: 20px;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--wsj-accent);
+            font-weight: 700;
+            margin: 50px 0 16px;
+            padding-top: 30px;
+            border-top: 1px solid var(--wsj-border);
+        }
+
+        h2 {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        h3 {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            font-weight: 400;
+            margin: 30px 0 16px;
+        }
+
+        /* Pull Quote */
+        .pull-quote {
+            font-size: 26px;
+            font-style: italic;
+            color: var(--wsj-dark-gray);
+            border-left: 3px solid var(--wsj-accent);
+            padding: 20px 0 20px 24px;
+            margin: 40px 0;
+            line-height: 1.4;
+        }
+
+        .pull-quote cite {
+            display: block;
+            font-size: 14px;
+            font-style: normal;
+            color: var(--wsj-light-gray);
+            margin-top: 12px;
+            font-family: var(--font-sans);
+        }
+
+        /* Key Number Callout */
+        .key-number {
+            background: var(--wsj-bg-light);
+            padding: 30px;
+            margin: 40px -40px;
+            text-align: center;
+        }
+
+        .key-number-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: var(--wsj-accent);
+            font-family: var(--font-sans);
+            line-height: 1;
+        }
+
+        .key-number-label {
+            font-size: 16px;
+            color: var(--wsj-mid-gray);
+            margin-top: 8px;
+            font-family: var(--font-sans);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px 24px;
+            background: #fff;
+            border: 1px solid var(--wsj-border);
+        }
+
+        .chart-header {
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-family: var(--font-sans);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--wsj-black);
+            margin-bottom: 6px;
+        }
+
+        .chart-subtitle {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            color: var(--wsj-mid-gray);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .chart-source {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            color: var(--wsj-light-gray);
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--wsj-border);
+        }
+
+        /* Data Tables */
+        .data-table-container {
+            max-width: 900px;
+            margin: 40px auto;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-sans);
+            font-size: 14px;
+        }
+
+        .data-table thead {
+            background: var(--wsj-bg-light);
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--wsj-mid-gray);
+            border-bottom: 2px solid var(--wsj-dark-gray);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--wsj-border);
+            vertical-align: top;
+        }
+
+        .data-table tr:hover {
+            background: var(--wsj-bg-light);
+        }
+
+        .data-table .number {
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+
+        .data-table .highlight {
+            font-weight: 700;
+            color: var(--wsj-accent);
+        }
+
+        .data-table .warning {
+            color: var(--wsj-warning);
+            font-weight: 600;
+        }
+
+        .data-table .success {
+            color: var(--wsj-success);
+        }
+
+        /* Info Box */
+        .info-box {
+            background: var(--wsj-bg-light);
+            border-left: 4px solid var(--wsj-accent);
+            padding: 24px;
+            margin: 40px 0;
+            font-family: var(--font-sans);
+            font-size: 15px;
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            color: var(--wsj-accent);
+        }
+
+        /* Methodology Box */
+        .methodology-box {
+            background: #fafafa;
+            border: 1px solid var(--wsj-border);
+            padding: 30px;
+            margin: 50px 0;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .methodology-box h4 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            color: var(--wsj-mid-gray);
+        }
+
+        .methodology-box ul {
+            margin-left: 20px;
+            margin-top: 12px;
+        }
+
+        .methodology-box li {
+            margin-bottom: 8px;
+        }
+
+        /* Risk Alert */
+        .risk-alert {
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            border-left: 4px solid var(--wsj-warning);
+            padding: 20px 24px;
+            margin: 30px 0;
+        }
+
+        .risk-alert-title {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--wsj-warning);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        /* Action Box */
+        .action-box {
+            background: #f0f7fb;
+            border: 1px solid #cce5f0;
+            border-left: 4px solid var(--wsj-accent);
+            padding: 24px;
+            margin: 40px 0;
+        }
+
+        .action-box-title {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--wsj-accent-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .action-box ul {
+            margin-left: 20px;
+            font-family: var(--font-sans);
+            font-size: 15px;
+        }
+
+        .action-box li {
+            margin-bottom: 8px;
+        }
+
+        /* Statistics Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--wsj-border);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-card-value {
+            font-family: var(--font-sans);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--wsj-accent);
+        }
+
+        .stat-card-label {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--wsj-mid-gray);
+            margin-top: 8px;
+        }
+
+        .stat-card-change {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .stat-card-change.positive {
+            color: var(--wsj-success);
+        }
+
+        .stat-card-change.negative {
+            color: var(--wsj-warning);
+        }
+
+        /* Navigation */
+        .article-nav {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+            border: 1px solid var(--wsj-border);
+            padding: 16px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            max-width: 200px;
+            display: none;
+        }
+
+        @media (min-width: 1200px) {
+            .article-nav {
+                display: block;
+            }
+        }
+
+        .article-nav-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--wsj-light-gray);
+            margin-bottom: 12px;
+            font-size: 10px;
+        }
+
+        .article-nav a {
+            display: block;
+            padding: 6px 0;
+            color: var(--wsj-mid-gray);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            padding-left: 12px;
+            transition: all 0.2s;
+        }
+
+        .article-nav a:hover,
+        .article-nav a.active {
+            color: var(--wsj-accent);
+            border-left-color: var(--wsj-accent);
+        }
+
+        /* Footer */
+        .article-footer {
+            max-width: 900px;
+            margin: 60px auto 0;
+            padding: 40px 24px 60px;
+            border-top: 3px double var(--wsj-border);
+            text-align: center;
+        }
+
+        .footer-note {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--wsj-light-gray);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--wsj-border);
+            margin-bottom: 24px;
+            font-family: var(--font-sans);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--wsj-mid-gray);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--wsj-black);
+        }
+
+        .tab.active {
+            color: var(--wsj-accent);
+            border-bottom-color: var(--wsj-accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Interactive Elements */
+        .interactive-note {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            color: var(--wsj-light-gray);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* Print Styles */
+        @media print {
+            .masthead,
+            .article-nav {
+                display: none;
+            }
+            
+            .chart-container {
+                break-inside: avoid;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .key-number {
+                margin: 40px -24px;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="masthead">
+        <div class="masthead-logo">Data Investigation • Linux Foundation Analysis</div>
+    </header>
+
+    <nav class="article-nav">
+        <div class="article-nav-title">In This Report</div>
+        <a href="#key-findings">Key Findings</a>
+        <a href="#efficiency">Efficiency Analysis</a>
+        <a href="#triage-trap">The Triage Trap</a>
+        <a href="#growth-maintenance">Growth vs. Maintenance</a>
+        <a href="#hidden-gems">Hidden Gems</a>
+        <a href="#bus-factor">Bus Factor Risk</a>
+        <a href="#burnout">Burnout Watch</a>
+        <a href="#churn">Churn Analysis</a>
+        <a href="#methodology">Methodology</a>
+        <a href="#actionable">Actionable Intelligence</a>
+    </nav>
+
+    <article>
+        <header class="hero">
+            <div class="kicker">Exclusive Analysis</div>
+            <h1 class="headline">The Hidden Economics of Open Source: Where Corporate Billions Meet Volunteer Labor</h1>
+            <p class="deck">A Wall Street Journal analysis of 11 Linux Foundation datasets reveals the projects most critical to enterprise infrastructure—and the warning signs investors and executives should not ignore.</p>
+            <div class="byline">
+                <div class="byline-author">By Varun Agnihotri</div>
+                <div class="byline-date">January 5, 2026</div>
+            </div>
+        </header>
+
+        <div class="article-container">
+            <p class="lead-paragraph">The open-source software that underpins trillions of dollars in global commerce is showing signs of strain. According to a Wall Street Journal analysis of Linux Foundation leaderboard data spanning more than 6,300 projects, critical infrastructure libraries are being maintained by skeleton crews, while some of the ecosystem's most productive teams are experiencing precipitous declines in activity—drops exceeding 97% in some cases.</p>
+
+            <p>The findings challenge conventional metrics used by enterprises to evaluate open-source dependencies. Projects that respond quickly to issues show virtually no correlation with their ability to actually resolve those issues. Teams generating extraordinary commit volumes are often engaged in endless refactoring rather than meaningful feature development.</p>
+
+            <p>"The data suggest that traditional leaderboard rankings—raw contributor counts, response times, commit volumes—tell an incomplete story," the analysis found. "What matters is the relationship between these metrics: efficiency ratios, momentum trends, and organizational diversity."</p>
+
+            <div id="key-findings" class="key-number">
+                <div class="key-number-value">0.03</div>
+                <div class="key-number-label">Correlation between response time and resolution rate—effectively zero</div>
+            </div>
+
+            <p>For corporate technology officers evaluating open-source dependencies, the implications are significant. Projects with fast response times may be deploying automated acknowledgment systems without the resources to address underlying issues. High commit counts may mask technical debt accumulation rather than signal healthy development.</p>
+
+            <div class="section-header" id="efficiency">The Evidence</div>
+            <h2>Do You Need a Massive Army to Move Fast?</h2>
+
+            <p>The data reveal a striking disparity in project efficiency. The metric—commits per active contributor—identifies projects operating as "special forces" units: small teams generating output that rivals organizations with hundreds of developers.</p>
+
+            <p>CBT Tape, a project with just three active contributors, generated 3,414 commits over the past 12 months—an efficiency ratio of 1,138 commits per contributor. By comparison, large-scale projects like Kubernetes, with thousands of contributors, operate at ratios closer to 10-15 commits per person.</p>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Project Efficiency: Active Contributors vs. Commit Volume</div>
+                <div class="chart-subtitle">Logarithmic scale | Circle size indicates commits per contributor ratio</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+            <div class="interactive-note">Hover over data points for project details</div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards, 12-month trailing data through January 2026</div>
+        </div>
+
+        <div class="article-container">
+            <div class="data-table-container">
+                <table class="data-table" id="efficiencyTable">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th class="number">Active Contributors</th>
+                            <th class="number">Commits (12M)</th>
+                            <th class="number">Commits/Contributor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <p>To be sure, high efficiency ratios can indicate either exceptional productivity or concerning concentration risk. A project sustained by one or two hyperactive maintainers may be one resignation away from stagnation.</p>
+
+            <div class="section-header" id="triage-trap">The Triage Trap</div>
+            <h2>Speed vs. Quality: The Myth of Fast Response</h2>
+
+            <p>If a project responds instantly to issues, conventional wisdom suggests they fix them faster too. The data indicate otherwise.</p>
+
+            <p>The correlation between median response time (how quickly a project acknowledges an issue) and resolution rate (how often issues actually get closed) is 0.03—statistically indistinguishable from zero.</p>
+
+            <div class="pull-quote">
+                "Fast bots saying 'Thanks for your issue!' doesn't mean the bug gets fixed. Enterprises should demand resolution metrics, not response metrics."
+                <cite>— Analysis finding</cite>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Response Time vs. Resolution Rate</div>
+                <div class="chart-subtitle">Each point represents a project | Regression line shown in red</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="responseChart"></canvas>
+            </div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards; correlation coefficient r = 0.03</div>
+        </div>
+
+        <div class="article-container">
+            <div class="info-box">
+                <div class="info-box-title">What This Means for Enterprises</div>
+                <p>Response time SLAs in open-source dependency policies may provide false assurance. Consider weighting resolution rate and PR merge velocity more heavily when evaluating project health.</p>
+            </div>
+
+            <div class="section-header" id="growth-maintenance">Growth vs. Maintenance</div>
+            <h2>Building Skyscrapers or Painting Walls?</h2>
+
+            <p>Commit activity alone reveals nothing about whether a project is expanding capabilities or treading water on technical debt. By comparing commit volume against codebase size, the analysis identified projects engaged in heavy maintenance or refactoring cycles.</p>
+
+            <p>Projects like Model Context Protocol (MCP) and EVerest showed massive commit activity relative to their codebase size—classic signatures of rapid iteration, stabilization phases, or non-code work that doesn't translate to lines shipped.</p>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Commit Activity vs. Codebase Size</div>
+                <div class="chart-subtitle">High commits with low codebase size may indicate refactoring or stabilization</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="growthChart"></canvas>
+            </div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards; codebase measured in source lines of code</div>
+        </div>
+
+        <div class="article-container">
+            <div class="data-table-container">
+                <table class="data-table" id="maintenanceTable">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th class="number">Commits</th>
+                            <th class="number">Codebase (LOC)</th>
+                            <th class="number">Maintenance Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-header" id="hidden-gems">Hidden Gems</div>
+            <h2>Which Projects Have Huge Corporate Buy-In but Relatively Small Contributor Circles?</h2>
+
+            <p>The analysis calculated an "Organizational Diversity Ratio"—the number of distinct contributing organizations divided by total contributors. High ratios identify projects where many companies have skin in the game but few people write the code.</p>
+
+            <p>These "hidden gems" often represent critical infrastructure libraries with stable APIs that don't require large development teams. Projects like ko, Infection, and Numcodecs emerged as standouts—widely adopted across industries but maintained by focused teams.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-value" id="gemCount">--</div>
+                    <div class="stat-card-label">High-Diversity Projects Identified</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value" id="avgDiversity">--</div>
+                    <div class="stat-card-label">Avg. Orgs per Contributor</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value" id="libraryCount">--</div>
+                    <div class="stat-card-label">Classified as Libraries</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Organizational Diversity: Contributors vs. Organizations</div>
+                <div class="chart-subtitle">Projects with >50 contributors shown | Color indicates project type classification</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="gemsChart"></canvas>
+            </div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards; classification based on project naming and metadata</div>
+        </div>
+
+        <div class="article-container">
+            <div class="info-box">
+                <div class="info-box-title">Libraries vs. Applications: Different Standards Apply</div>
+                <p><strong>Libraries (e.g., Resolve, MarkupSafe):</strong> High corporate use with low contributors is often healthy. Stable APIs don't need a thousand cooks in the kitchen.</p>
+                <p><strong>Applications (e.g., E4S):</strong> High corporate use with low contributors is a warning. Companies are using the app but not giving back.</p>
+            </div>
+
+            <div class="section-header" id="bus-factor">The Bus Factor Watchlist</div>
+            <h2>Which Projects Are Punching Way Above Their Weight—and Thus Have the Highest Risk?</h2>
+
+            <p>The "Small Teams, Massive Output" dataset identifies projects with 50 or fewer contributors generating extraordinary commit volumes. These are the "David" projects of the ecosystem—impressive, but fragile.</p>
+
+            <div class="risk-alert">
+                <div class="risk-alert-title">Concentration Risk Warning</div>
+                <p>High output from a small group means if one key person leaves, the project could stall. Enterprises depending on these projects should consider contributing resources or identifying backup suppliers.</p>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Small Teams, Massive Output: The Bus Factor Watchlist</div>
+                <div class="chart-subtitle">Projects with ≤50 contributors ranked by commit volume</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="busFactorChart"></canvas>
+            </div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards; 12-month trailing data</div>
+        </div>
+
+        <div class="article-container">
+            <div class="section-header" id="burnout">Burnout Watch</div>
+            <h2>Who Is Running Out of Steam?</h2>
+
+            <p>The most concerning finding: several projects with historically high productivity scores are now experiencing dramatic declines in commit activity. The analysis identified projects where momentum—the percentage change in commits versus the prior period—has dropped precipitously.</p>
+
+            <p>Projects like Islet and CheriBSD, once generating substantial output, showed declines exceeding 97%. These teams were running hot but are now stalling. If your enterprise depends on these, the data suggest immediate due diligence.</p>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Project Momentum: Productivity Score vs. Activity Change</div>
+                <div class="chart-subtitle">Red indicates declining momentum; Green indicates growth</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="burnoutChart"></canvas>
+            </div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards; momentum calculated as (current - previous) / previous commits</div>
+        </div>
+
+        <div class="article-container">
+            <div class="data-table-container">
+                <table class="data-table" id="burnoutTable">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th class="number">Productivity Score</th>
+                            <th class="number">Current Commits</th>
+                            <th class="number">Previous Commits</th>
+                            <th class="number">Momentum Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-header" id="churn">The Churn Trap</div>
+            <h2>Are They Building New Features or Just Rewriting the Same Code Forever?</h2>
+
+            <p>The final analysis examined "churn"—the relationship between commit activity and net codebase growth. A high churn ratio (commits per net line of code change) suggests a project is engaged in extensive refactoring rather than feature development.</p>
+
+            <p>Model Context Protocol (MCP) and EVerest showed churn ratios exceeding 2,000—hundreds of commits resulting in minimal net code change. This indicates stabilization phases, heavy refactoring, or work that doesn't appear in traditional line counts (documentation, configuration, testing).</p>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Activity vs. Growth: Identifying High-Churn Projects</div>
+                <div class="chart-subtitle">Projects with >100 commits shown | Color intensity indicates churn ratio</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="churnChart"></canvas>
+            </div>
+            <div class="chart-source">Source: Linux Foundation LFX Leaderboards; churn = commits / |net line change|</div>
+        </div>
+
+        <div class="article-container">
+            <div class="section-header" id="methodology">Methodology & Limitations</div>
+            
+            <div class="methodology-box">
+                <h4>How This Analysis Was Conducted</h4>
+                <p><strong>Data Sources:</strong> All data derived from Linux Foundation LFX Leaderboards, covering 11 distinct ranking categories across the open-source ecosystem.</p>
+                
+                <p><strong>Time Period:</strong> Trailing 12 months through January 2026, with previous period comparisons where available.</p>
+                
+                <p><strong>Datasets Analyzed:</strong></p>
+                <ul>
+                    <li>Contributors and Active Contributors</li>
+                    <li>Organizations and Active Organizations</li>
+                    <li>Commit Activity and Codebase Size</li>
+                    <li>Fastest Responders and Fastest Mergers</li>
+                    <li>Resolution Rate and Focused Teams</li>
+                    <li>Small Teams, Massive Output</li>
+                </ul>
+                
+                <p><strong>Key Calculations:</strong></p>
+                <ul>
+                    <li><strong>Efficiency Ratio:</strong> Commits / Active Contributors</li>
+                    <li><strong>Organizational Diversity:</strong> Active Organizations / Active Contributors</li>
+                    <li><strong>Momentum:</strong> (Current Commits - Previous Commits) / Previous Commits</li>
+                    <li><strong>Churn Ratio:</strong> Commits / |Current LOC - Previous LOC|</li>
+                    <li><strong>Maintenance Ratio:</strong> Commits / Codebase Size (LOC)</li>
+                </ul>
+                
+                <p><strong>Limitations:</strong></p>
+                <ul>
+                    <li>Commit counts don't differentiate between substantive changes and minor updates</li>
+                    <li>Lines of code is an imperfect proxy for codebase complexity</li>
+                    <li>Project classification (Library vs. App) based on heuristic keyword matching</li>
+                    <li>Bot contributions may inflate some metrics</li>
+                    <li>Data represents public repositories only; private forks and internal development are not captured</li>
+                </ul>
+            </div>
+
+            <div class="section-header" id="actionable">Actionable Intelligence</div>
+            <h2>What Should Decision-Makers Do With This Information?</h2>
+
+            <div class="action-box">
+                <div class="action-box-title">For Chief Technology Officers</div>
+                <ul>
+                    <li>Audit critical dependencies against the Bus Factor watchlist; consider contributing resources to high-risk projects</li>
+                    <li>Replace response-time metrics in dependency policies with resolution rate and merge velocity</li>
+                    <li>Flag declining-momentum projects for quarterly review; develop contingency suppliers</li>
+                </ul>
+            </div>
+
+            <div class="action-box">
+                <div class="action-box-title">For Portfolio Managers & Investors</div>
+                <ul>
+                    <li>Evaluate tech companies' open-source dependency risk as part of due diligence</li>
+                    <li>Consider organizational diversity ratios as signals of sustainable infrastructure investment</li>
+                    <li>Monitor burnout indicators in projects critical to portfolio company operations</li>
+                </ul>
+            </div>
+
+            <div class="action-box">
+                <div class="action-box-title">For Open Source Program Officers</div>
+                <ul>
+                    <li>Prioritize contributions to "Hidden Gem" libraries with high corporate adoption but limited contributor bases</li>
+                    <li>Investigate high-churn projects before major integrations; understand whether activity represents growth or technical debt</li>
+                    <li>Establish monitoring dashboards for momentum changes in critical dependencies</li>
+                </ul>
+            </div>
+
+            <h3>The Bottom Line</h3>
+
+            <p>The open-source ecosystem's health cannot be measured by raw activity metrics alone. The data reveal a more nuanced picture: projects where speed masks inaction, where efficiency creates fragility, and where yesterday's momentum can evaporate without warning.</p>
+
+            <p>For enterprises building on this foundation, the message is clear: look beyond the leaderboard. The most important signals are in the ratios, the trends, and the relationships between metrics—not the metrics themselves.</p>
+
+            <p><em>Data doesn't lie, but it does whisper. You just have to listen closely.</em></p>
+        </div>
+    </article>
+
+    <footer class="article-footer">
+        <p class="footer-note" style="font-weight: 600; margin-bottom: 0.5rem;">Analysis by <a href="https://github.com/PythonicVarun" target="_blank" style="color: var(--wsj-accent); text-decoration: none;">@PythonicVarun</a></p>
+        <p class="footer-note">Data analysis conducted using Linux Foundation LFX Leaderboard datasets.<br>
+        For questions about methodology, contact the data investigations team.</p>
+    </footer>
+
+    <script>
+        // Load the data
+        let reportData = {};
+
+        async function loadData() {
+            try {
+                const response = await fetch('../report_data.json');
+                reportData = await response.json();
+                initCharts();
+                populateTables();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Chart.js defaults for WSJ style
+        Chart.defaults.font.family = "'Retina', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = '#666666';
+        Chart.defaults.plugins.legend.display = false;
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(17, 17, 17, 0.9)';
+        Chart.defaults.plugins.tooltip.titleFont.size = 13;
+        Chart.defaults.plugins.tooltip.bodyFont.size = 12;
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 0;
+
+        const wsjColors = {
+            primary: '#0274b6',
+            secondary: '#666666',
+            accent: '#015c8f',
+            warning: '#c73e1d',
+            success: '#2e7d32',
+            gridColor: 'rgba(212, 212, 212, 0.5)',
+            lightBlue: 'rgba(2, 116, 182, 0.6)',
+            lightRed: 'rgba(199, 62, 29, 0.6)',
+            lightGreen: 'rgba(46, 125, 50, 0.6)'
+        };
+
+        function initCharts() {
+            createEfficiencyChart();
+            createResponseChart();
+            createGrowthChart();
+            createGemsChart();
+            createBusFactorChart();
+            createBurnoutChart();
+            createChurnChart();
+        }
+
+        function createEfficiencyChart() {
+            const ctx = document.getElementById('efficiencyChart').getContext('2d');
+            const data = reportData.efficiency_all || [];
+            
+            // Sample data for better visualization
+            const sampled = data.filter((_, i) => i % 3 === 0 || data[i].commits_per_contributor > 50);
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: sampled.map(d => ({
+                            x: d.active_contributors,
+                            y: d.commits,
+                            name: d.name,
+                            ratio: d.commits_per_contributor
+                        })),
+                        backgroundColor: sampled.map(d => {
+                            const alpha = Math.min(0.8, 0.2 + (d.commits_per_contributor / 500));
+                            return `rgba(2, 116, 182, ${alpha})`;
+                        }),
+                        pointRadius: sampled.map(d => Math.min(20, 3 + Math.sqrt(d.commits_per_contributor / 10))),
+                        pointHoverRadius: sampled.map(d => Math.min(25, 5 + Math.sqrt(d.commits_per_contributor / 10)))
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Active Contributors',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Commits (12 months)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `Project: ${d.name}`,
+                                        `Contributors: ${d.x}`,
+                                        `Commits: ${d.y.toLocaleString()}`,
+                                        `Efficiency: ${d.ratio.toFixed(1)} commits/contributor`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createResponseChart() {
+            const ctx = document.getElementById('responseChart').getContext('2d');
+            const data = reportData.response_resolution || [];
+            
+            // Calculate regression line
+            const xValues = data.map(d => d.response_time_hours);
+            const yValues = data.map(d => d.resolution_rate);
+            const regression = calculateRegression(xValues, yValues);
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: data.map(d => ({
+                            x: d.response_time_hours,
+                            y: d.resolution_rate,
+                            name: d.name
+                        })),
+                        backgroundColor: wsjColors.lightBlue,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }, {
+                        label: 'Regression',
+                        data: [
+                            { x: Math.min(...xValues), y: regression.slope * Math.min(...xValues) + regression.intercept },
+                            { x: Math.max(...xValues), y: regression.slope * Math.max(...xValues) + regression.intercept }
+                        ],
+                        type: 'line',
+                        borderColor: wsjColors.warning,
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Response Time (Hours)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Resolution Rate',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    if (ctx.datasetIndex === 1) return null;
+                                    const d = ctx.raw;
+                                    return [
+                                        `Project: ${d.name}`,
+                                        `Response Time: ${d.x.toFixed(1)} hours`,
+                                        `Resolution Rate: ${(d.y * 100).toFixed(1)}%`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createGrowthChart() {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            const data = reportData.growth_maintenance || [];
+            
+            const sampled = data.filter(d => d.commits > 50 && d.codebase_size > 1000);
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: sampled.map(d => ({
+                            x: d.commits,
+                            y: d.codebase_size,
+                            name: d.name,
+                            ratio: d.maintenance_ratio
+                        })),
+                        backgroundColor: sampled.map(d => {
+                            const ratio = d.maintenance_ratio;
+                            if (ratio > 0.1) return wsjColors.lightRed;
+                            if (ratio > 0.01) return 'rgba(255, 193, 7, 0.6)';
+                            return wsjColors.lightBlue;
+                        }),
+                        pointRadius: 6,
+                        pointHoverRadius: 9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Commits (12 months)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Codebase Size (Lines of Code)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `Project: ${d.name}`,
+                                        `Commits: ${d.x.toLocaleString()}`,
+                                        `Codebase: ${d.y.toLocaleString()} LOC`,
+                                        `Maintenance Ratio: ${d.ratio.toFixed(4)}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createGemsChart() {
+            const ctx = document.getElementById('gemsChart').getContext('2d');
+            const data = reportData.segmented_gems || [];
+            
+            const typeColors = {
+                'Library/Tool': wsjColors.primary,
+                'End-User App': wsjColors.warning,
+                'Hybrid/Platform': '#9c27b0',
+                'Unclassified': wsjColors.secondary
+            };
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: Object.keys(typeColors).map(type => ({
+                        label: type,
+                        data: data.filter(d => d.type === type).map(d => ({
+                            x: d.active_contributors,
+                            y: d.active_organizations,
+                            name: d.name,
+                            ratio: d.org_diversity_ratio
+                        })),
+                        backgroundColor: typeColors[type] + '99',
+                        pointRadius: 8,
+                        pointHoverRadius: 11
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Active Contributors',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Active Organizations',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `Project: ${d.name}`,
+                                        `Contributors: ${d.x}`,
+                                        `Organizations: ${d.y}`,
+                                        `Diversity Ratio: ${d.ratio.toFixed(2)}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBusFactorChart() {
+            const ctx = document.getElementById('busFactorChart').getContext('2d');
+            const data = (reportData.bus_factor || []).slice(0, 15);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name.length > 25 ? d.name.slice(0, 25) + '...' : d.name),
+                    datasets: [{
+                        label: 'Commits',
+                        data: data.map(d => d.commits),
+                        backgroundColor: data.map((_, i) => {
+                            const intensity = 0.4 + (0.5 * (1 - i / data.length));
+                            return `rgba(2, 116, 182, ${intensity})`;
+                        }),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Commits (12 months)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.toLocaleString()} commits (≤50 contributors)`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBurnoutChart() {
+            const ctx = document.getElementById('burnoutChart').getContext('2d');
+            const data = (reportData.burnout_all || []).filter(d => d.commits > 50);
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: data.map(d => ({
+                            x: d.productivity_score,
+                            y: d.momentum,
+                            name: d.name,
+                            commits: d.commits,
+                            prev: d.prev_commits
+                        })),
+                        backgroundColor: data.map(d => d.momentum < 0 ? wsjColors.lightRed : wsjColors.lightGreen),
+                        pointRadius: 6,
+                        pointHoverRadius: 9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Productivity Score (Commits/Contributor)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Momentum (Activity Change)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor },
+                            ticks: {
+                                callback: (value) => (value * 100).toFixed(0) + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: 0,
+                                    yMax: 0,
+                                    borderColor: '#333',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `Project: ${d.name}`,
+                                        `Productivity: ${d.x.toFixed(1)}`,
+                                        `Momentum: ${(d.y * 100).toFixed(1)}%`,
+                                        `Current: ${d.commits} | Previous: ${d.prev}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createChurnChart() {
+            const ctx = document.getElementById('churnChart').getContext('2d');
+            const data = (reportData.churn_all || []).filter(d => d.net_line_change > 0);
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Projects',
+                        data: data.map(d => ({
+                            x: d.net_line_change,
+                            y: d.commits,
+                            name: d.name,
+                            churn: d.churn_ratio
+                        })),
+                        backgroundColor: data.map(d => {
+                            const churn = d.churn_ratio;
+                            if (churn > 100) return wsjColors.lightRed;
+                            if (churn > 10) return 'rgba(255, 193, 7, 0.6)';
+                            return wsjColors.lightBlue;
+                        }),
+                        pointRadius: 6,
+                        pointHoverRadius: 9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Net Line Change (Growth)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Commits (Activity)',
+                                font: { weight: 'bold' }
+                            },
+                            grid: { color: wsjColors.gridColor }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `Project: ${d.name}`,
+                                        `Commits: ${d.y.toLocaleString()}`,
+                                        `Net Line Change: ${d.x.toLocaleString()}`,
+                                        `Churn Ratio: ${d.churn.toFixed(1)}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function populateTables() {
+            // Efficiency table
+            const effTable = document.getElementById('efficiencyTable').querySelector('tbody');
+            const effData = (reportData.efficiency || []).slice(0, 10);
+            effTable.innerHTML = effData.map(d => `
+                <tr>
+                    <td>${d.name}</td>
+                    <td class="number">${d.active_contributors}</td>
+                    <td class="number">${d.commits.toLocaleString()}</td>
+                    <td class="number highlight">${d.commits_per_contributor.toFixed(1)}</td>
+                </tr>
+            `).join('');
+
+            // Maintenance table
+            const maintTable = document.getElementById('maintenanceTable').querySelector('tbody');
+            const maintData = (reportData.top_maintenance || []).slice(0, 10);
+            maintTable.innerHTML = maintData.map(d => `
+                <tr>
+                    <td>${d.name}</td>
+                    <td class="number">${d.commits.toLocaleString()}</td>
+                    <td class="number">${d.codebase_size.toLocaleString()}</td>
+                    <td class="number">${d.maintenance_ratio.toFixed(4)}</td>
+                </tr>
+            `).join('');
+
+            // Burnout table
+            const burnTable = document.getElementById('burnoutTable').querySelector('tbody');
+            const burnData = (reportData.burnout_risk || []).slice(0, 10);
+            burnTable.innerHTML = burnData.map(d => `
+                <tr>
+                    <td>${d.name}</td>
+                    <td class="number">${d.productivity_score.toFixed(1)}</td>
+                    <td class="number">${d.commits.toLocaleString()}</td>
+                    <td class="number">${d.prev_commits.toLocaleString()}</td>
+                    <td class="number warning">${(d.momentum * 100).toFixed(1)}%</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStats() {
+            const gems = reportData.segmented_gems || [];
+            document.getElementById('gemCount').textContent = gems.length;
+            
+            const avgDiv = gems.reduce((sum, d) => sum + d.org_diversity_ratio, 0) / gems.length;
+            document.getElementById('avgDiversity').textContent = avgDiv.toFixed(2);
+            
+            const libCount = gems.filter(d => d.type === 'Library/Tool').length;
+            document.getElementById('libraryCount').textContent = libCount;
+        }
+
+        function calculateRegression(xValues, yValues) {
+            const n = xValues.length;
+            const sumX = xValues.reduce((a, b) => a + b, 0);
+            const sumY = yValues.reduce((a, b) => a + b, 0);
+            const sumXY = xValues.reduce((total, x, i) => total + x * yValues[i], 0);
+            const sumXX = xValues.reduce((total, x) => total + x * x, 0);
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            return { slope, intercept };
+        }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('.article-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Highlight active nav on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('[id]');
+            const navLinks = document.querySelectorAll('.article-nav a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>

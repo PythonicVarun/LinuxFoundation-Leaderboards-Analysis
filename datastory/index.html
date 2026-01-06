@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Stories | Linux Foundation Leaderboards Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --bg-card-hover: #22222e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --accent-cyan: #00f5d4;
+            --accent-pink: #ff006e;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
+            --accent-blue: #3b82f6;
+            --border: rgba(255, 255, 255, 0.08);
+            --gradient-1: linear-gradient(135deg, #00f5d4 0%, #8b5cf6 100%);
+            --gradient-2: linear-gradient(135deg, #ff006e 0%, #f97316 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Animated gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 245, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 0, 110, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(0, 245, 212, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin: 0 auto 16px;
+        }
+
+        .meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .ai-note {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .ai-note strong {
+            color: var(--accent-cyan);
+        }
+
+        .ai-note a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .ai-note a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        /* Cards Grid */
+        .stories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+            padding-bottom: 100px;
+        }
+
+        .story-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            text-decoration: none;
+            display: block;
+        }
+
+        .story-card:hover {
+            transform: translateY(-8px);
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(139, 92, 246, 0.1);
+        }
+
+        .story-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .story-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-preview {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 28px;
+        }
+
+        .card-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .card-description {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .view-story {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: gap 0.3s ease;
+        }
+
+        .story-card:hover .view-story {
+            gap: 12px;
+        }
+
+        .view-story svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .story-card:hover .view-story svg {
+            transform: translateX(4px);
+        }
+
+        /* Individual Card Styles */
+        
+        /* Chhota Bheem */
+        .card-chhota-bheem::before {
+            background: linear-gradient(90deg, #F97316, #F59E0B);
+        }
+        .card-chhota-bheem .card-preview {
+            background: linear-gradient(135deg, #1a1410 0%, #2d1f14 100%);
+        }
+        .card-chhota-bheem .card-tag {
+            background: rgba(249, 115, 22, 0.15);
+            color: #F97316;
+        }
+        .card-chhota-bheem .view-story {
+            color: #F97316;
+        }
+        .card-chhota-bheem .preview-icon {
+            font-size: 4rem;
+            filter: drop-shadow(0 0 30px rgba(249, 115, 22, 0.4));
+        }
+
+        /* Malcolm Gladwell */
+        .card-malcolm-gladwell::before {
+            background: linear-gradient(90deg, #2563eb, #1e3a5f);
+        }
+        .card-malcolm-gladwell .card-preview {
+            background: linear-gradient(135deg, #faf9f6 0%, #e8e6e1 100%);
+        }
+        .card-malcolm-gladwell .card-tag {
+            background: rgba(37, 99, 235, 0.15);
+            color: #3b82f6;
+        }
+        .card-malcolm-gladwell .view-story {
+            color: #3b82f6;
+        }
+        .card-malcolm-gladwell .preview-content {
+            width: 100%;
+            height: 100%;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card-malcolm-gladwell .preview-title {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .card-malcolm-gladwell .preview-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+        .card-malcolm-gladwell .preview-line {
+            height: 6px;
+            background: #c5c5c5;
+            border-radius: 3px;
+        }
+        .card-malcolm-gladwell .preview-line:nth-child(1) { width: 100%; }
+        .card-malcolm-gladwell .preview-line:nth-child(2) { width: 95%; }
+        .card-malcolm-gladwell .preview-line:nth-child(3) { width: 100%; }
+        .card-malcolm-gladwell .preview-line:nth-child(4) { width: 70%; }
+        .card-malcolm-gladwell .preview-dropcap {
+            display: inline-block;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            line-height: 1;
+            float: left;
+            margin-right: 8px;
+            margin-top: 4px;
+        }
+
+        /* Polygraph */
+        .card-polygraph::before {
+            background: linear-gradient(90deg, #00f5d4, #8338ec);
+        }
+        .card-polygraph .card-preview {
+            background: linear-gradient(135deg, #0a0a0f 0%, #13131a 100%);
+        }
+        .card-polygraph .card-tag {
+            background: rgba(0, 245, 212, 0.15);
+            color: #00f5d4;
+        }
+        .card-polygraph .view-story {
+            color: #00f5d4;
+        }
+        .card-polygraph .preview-dots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card-polygraph .dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .card-polygraph .dot:nth-child(1) { background: #00f5d4; animation-delay: 0s; }
+        .card-polygraph .dot:nth-child(2) { background: #ff006e; animation-delay: 0.2s; }
+        .card-polygraph .dot:nth-child(3) { background: #8338ec; animation-delay: 0.4s; }
+        .card-polygraph .dot:nth-child(4) { background: #ffbe0b; animation-delay: 0.6s; }
+        .card-polygraph .dot:nth-child(5) { background: #fb5607; animation-delay: 0.8s; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+        }
+
+        /* Shirley Wu */
+        .card-shirley-wu::before {
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+        }
+        .card-shirley-wu .card-preview {
+            background: linear-gradient(135deg, #faf8f5 0%, #f0ebe5 100%);
+        }
+        .card-shirley-wu .card-tag {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+        }
+        .card-shirley-wu .view-story {
+            color: #ff6b6b;
+        }
+        .card-shirley-wu .preview-circles {
+            position: relative;
+            width: 150px;
+            height: 150px;
+        }
+        .card-shirley-wu .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+        .card-shirley-wu .circle:nth-child(1) {
+            width: 80px; height: 80px;
+            background: #ff6b6b;
+            top: 10px; left: 35px;
+        }
+        .card-shirley-wu .circle:nth-child(2) {
+            width: 70px; height: 70px;
+            background: #4ecdc4;
+            top: 50px; left: 10px;
+        }
+        .card-shirley-wu .circle:nth-child(3) {
+            width: 60px; height: 60px;
+            background: #ffd93d;
+            top: 60px; left: 70px;
+        }
+
+        /* Wall Street Journal */
+        .card-wsj::before {
+            background: linear-gradient(90deg, #111111, #0274b6);
+        }
+        .card-wsj .card-preview {
+            background: linear-gradient(135deg, #f7f7f7 0%, #e8e8e8 100%);
+        }
+        .card-wsj .card-tag {
+            background: rgba(2, 116, 182, 0.15);
+            color: #0274b6;
+        }
+        .card-wsj .view-story {
+            color: #0274b6;
+        }
+        .card-wsj .preview-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 100px;
+            padding: 20px;
+        }
+        .card-wsj .bar {
+            width: 24px;
+            background: #111111;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+        .card-wsj .bar:nth-child(1) { height: 40%; }
+        .card-wsj .bar:nth-child(2) { height: 65%; }
+        .card-wsj .bar:nth-child(3) { height: 50%; }
+        .card-wsj .bar:nth-child(4) { height: 80%; }
+        .card-wsj .bar:nth-child(5) { height: 60%; }
+        .card-wsj .bar:nth-child(6) { height: 90%; background: #0274b6; }
+        .card-wsj .bar:nth-child(7) { height: 75%; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0 60px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        footer a:hover {
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 60px 0 40px;
+            }
+            
+            .stories-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .card-content {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="badge">📊 Linux Foundation Leaderboards</div>
+            <h1>Data Stories Collection</h1>
+            <p class="subtitle">Explore the hidden patterns and fascinating insights from open source communities through multiple visual storytelling styles.</p>
+            <p class="meta">Same data, different perspectives • Choose your narrative adventure</p>
+            <p class="ai-note">📝 Analysis by <strong><a href="https://github.com/PythonicVarun" target="_blank">Varun Agnihotri</a></strong> • Data stories generated by <strong>GPT-5 mini</strong></p>
+        </header>
+
+        <div class="stories-grid">
+            <!-- Malcolm Gladwell Style -->
+            <a href="malcolm-gladwell-style/index.html" class="story-card card-malcolm-gladwell">
+                <div class="card-preview">
+                    <div class="preview-content">
+                        <span class="preview-dropcap">T</span>
+                        <div class="preview-lines">
+                            <div class="preview-line"></div>
+                            <div class="preview-line"></div>
+                            <div class="preview-line"></div>
+                            <div class="preview-line"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="card-tag">Narrative</span>
+                    <h2 class="card-title">The Hidden Pulse of Open Source</h2>
+                    <p class="card-description">Long-form narrative journalism that weaves data into compelling stories. Deep insights presented through thoughtful prose and elegant typography.</p>
+                    <div class="card-footer">
+                        <span class="view-story">
+                            Read Story
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Polygraph Style -->
+            <a href="polygraph-style/index.html" class="story-card card-polygraph">
+                <div class="card-preview">
+                    <div class="preview-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="card-tag">Interactive</span>
+                    <h2 class="card-title">The Secret Lives of Open Source Projects</h2>
+                    <p class="card-description">Bold, neon-infused data journalism with scrollytelling and immersive animations. A cinematic experience through contributor ecosystems.</p>
+                    <div class="card-footer">
+                        <span class="view-story">
+                            Experience Story
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Shirley Wu Style -->
+            <a href="shirley-wu-style/index.html" class="story-card card-shirley-wu">
+                <div class="card-preview">
+                    <div class="preview-circles">
+                        <span class="circle"></span>
+                        <span class="circle"></span>
+                        <span class="circle"></span>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="card-tag">Artistic</span>
+                    <h2 class="card-title">A Personal Journey Through Open Source Data</h2>
+                    <p class="card-description">Delicate, hand-crafted D3.js visualizations with personal annotations. Data art that tells a human story through organic, flowing designs.</p>
+                    <div class="card-footer">
+                        <span class="view-story">
+                            Discover Story
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Wall Street Journal Style -->
+            <a href="wall-street-journal-style/index.html" class="story-card card-wsj">
+                <div class="card-preview">
+                    <div class="preview-chart">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="card-tag">Analytical</span>
+                    <h2 class="card-title">The Hidden Economics of Open Source</h2>
+                    <p class="card-description">Professional financial journalism style with clean charts and authoritative analysis. Data-driven insights presented with clarity and precision.</p>
+                    <div class="card-footer">
+                        <span class="view-story">
+                            View Analysis
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Chhota Bheem Style -->
+            <a href="chhota-bheem-style/index.html" class="story-card card-chhota-bheem">
+                <div class="card-preview">
+                    <span class="preview-icon">🦸‍♂️</span>
+                </div>
+                <div class="card-content">
+                    <span class="card-tag">Adventure</span>
+                    <h2 class="card-title">Open Source Data Adventure</h2>
+                    <p class="card-description">An animated, vibrant journey through open source insights with bold colors and playful energy. Perfect for those who love visual excitement.</p>
+                    <div class="card-footer">
+                        <span class="view-story">
+                            Explore Story
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <footer>
+            <p>Built with ❤️ for the open source community</p>
+            <p style="margin-top: 8px;">Data sourced from <a href="https://insights.linuxfoundation.org/" target="_blank">LFX Leaderboards</a></p>
+        </footer>
+    </div>
+</body>
+</html>

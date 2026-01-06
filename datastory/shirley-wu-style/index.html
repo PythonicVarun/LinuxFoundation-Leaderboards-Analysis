@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Personal Journey Through Open Source Data</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-cream: #faf8f5;
+            --text-dark: #2d2d2d;
+            --text-muted: #6b6b6b;
+            --accent-coral: #ff6b6b;
+            --accent-teal: #4ecdc4;
+            --accent-gold: #ffd93d;
+            --accent-purple: #a855f7;
+            --accent-blue: #60a5fa;
+            --gradient-warm: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
+            --gradient-cool: linear-gradient(135deg, #4ecdc4 0%, #a855f7 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(78, 205, 196, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 30%);
+            animation: float 20s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--text-dark) 0%, var(--accent-coral) 50%, var(--accent-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            margin-bottom: 3rem;
+            font-style: italic;
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        .scroll-hint svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Narrative Sections */
+        .narrative {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+        }
+
+        .narrative p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: var(--text-dark);
+        }
+
+        .narrative p.lead {
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: var(--text-muted);
+        }
+
+        .narrative .highlight {
+            background: linear-gradient(120deg, rgba(255, 107, 107, 0.2) 0%, rgba(78, 205, 196, 0.2) 100%);
+            padding: 0.1em 0.3em;
+            border-radius: 4px;
+        }
+
+        .narrative h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 400;
+            margin: 4rem 0 2rem;
+            color: var(--text-dark);
+        }
+
+        .notebook-sketch {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 3rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5e5;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            position: relative;
+        }
+
+        .notebook-sketch::before {
+            content: '📓 From my notebook';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-cream);
+            padding: 0 10px;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 0.85rem;
+            color: var(--accent-coral);
+        }
+
+        /* Visualization Containers */
+        .viz-section {
+            padding: 4rem 2rem;
+            margin: 2rem 0;
+        }
+
+        .viz-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+        }
+
+        .viz-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .viz-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+            max-width: 280px;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .tooltip p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent-coral);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .narrative {
+                padding: 3rem 1.5rem;
+            }
+            .viz-container {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Scroll animations */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Stats highlight */
+        .stat-highlight {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin: 0.5rem;
+        }
+
+        .stat-highlight .number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--accent-coral);
+        }
+
+        .stat-highlight .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Mapping the Constellations of Open Source</h1>
+            <p class="subtitle">A personal exploration of 4,900+ projects from the Linux Foundation Leaderboards</p>
+            <div class="stats-row">
+                <div class="stat-highlight">
+                    <span class="number">5,239</span>
+                    <span class="label">Projects Analyzed</span>
+                </div>
+                <div class="stat-highlight">
+                    <span class="number">500K+</span>
+                    <span class="label">Contributors</span>
+                </div>
+                <div class="stat-highlight">
+                    <span class="number">1.2M</span>
+                    <span class="label">Commits</span>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-hint">
+            <span>Scroll to explore</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- The Spark -->
+    <section class="narrative" id="spark">
+        <h2>The Spark ✨</h2>
+        <p class="lead">I started by sketching out ideas in my notebook...</p>
+        <p>
+            It began with a simple question: <span class="highlight">What does the open source universe actually look like?</span> 
+            Not the famous stars we all know—Linux, Kubernetes, VS Code—but the entire cosmos. 
+            The quiet projects maintained by three people. The hidden gems with incredible contributor diversity. 
+            The projects on the edge of burnout.
+        </p>
+        <p>
+            I'd been playing with the Linux Foundation's Leaderboards data for weeks, pulling down JSON files, 
+            sketching radial layouts on napkins during lunch breaks. The data surprised me because it told stories 
+            I didn't expect—stories about dedication, about community health, about what makes projects thrive or fade.
+        </p>
+        <div class="notebook-sketch">
+            🎯 The Research Questions:<br>
+            ════════════════════════════════════════════════════════════<br>
+            <strong>Q1: Do you need a massive army to move fast?</strong><br>
+            → Efficiency: David vs. Goliath<br><br>
+            <strong>Q2: If a project responds instantly, do they fix issues faster?</strong><br>
+            → The "Triage Trap": Speed vs. Quality<br><br>
+            <strong>Q3: Is the project building a skyscraper or painting walls?</strong><br>
+            → Growth vs. Maintenance<br><br>
+            <strong>Q4: Which projects have huge corporate buy-in but small teams?</strong><br>
+            → Finding "Hidden Gems" (Corporate Darlings)<br><br>
+            <strong>Q5: Which projects are punching way above their weight?</strong><br>
+            → The "Bus Factor" Watchlist<br><br>
+            <strong>Q6: Who is running out of steam?</strong><br>
+            → Burnout Risk: The "Red Alert" List<br><br>
+            <strong>Q7: Is a low contributor count always bad?</strong><br>
+            → Libraries vs. Apps: The "Free Rider" Problem<br><br>
+            <strong>Q8: Are they building features or rewriting the same code?</strong><br>
+            → The "Churn" Trap: Motion vs. Progress
+        </div>
+    </section>
+
+    <!-- Visualization 1: Efficiency Constellation -->
+    <section class="narrative" id="q1">
+        <h2>Q1: Do you need a massive army to move fast? 🚀</h2>
+        <p class="lead">Efficiency: David vs. Goliath</p>
+        <p>
+            We're calculating the <span class="highlight">Commits per Contributor</span> ratio.
+            A <strong>high ratio</strong> means a small, elite team (or highly automated bots) doing massive work.
+            A <strong>low ratio</strong> means a large community where each person contributes a little—the "Bazaar" model.
+        </p>
+        <p>
+            Let's see who the "Special Forces" of open source are.
+        </p>
+    </section>
+
+    <section class="viz-section" id="efficiency-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">The Efficiency Constellation</h3>
+            <p class="viz-subtitle">Each star represents a project. Brightness = commits per contributor. Size = total commits.</p>
+            <div id="efficiency-chart"></div>
+        </div>
+    </section>
+
+    <section class="narrative">
+        <p>
+            This is where things got interesting... I tried a bar chart first, but it felt too cold, too corporate. 
+            These aren't just numbers—they're communities of people shipping code. So I tried something different: 
+            <span class="highlight">what if each project was a star in a constellation?</span>
+        </p>
+        <p>
+            The brightest stars are projects with incredible efficiency—small teams doing massive work. 
+            Look at <strong>CBT Tape</strong> at the center: just 3 contributors produced 1,138 commits each. 
+            That's dedication you can see.
+        </p>
+        <p>
+            Technically, I used D3's force simulation to let the stars find their natural positions, 
+            then added a radial gradient to give that soft glow effect. The colors shift from warm coral 
+            for the most efficient to cool teal for the larger community projects.
+        </p>
+    </section>
+
+    <!-- Visualization 2: Hidden Gems -->
+    <section class="narrative" id="gems-narrative">
+        <h2>Q4: Which projects have huge corporate buy-in but small teams? 💎</h2>
+        <p class="lead">Finding "Hidden Gems" (Corporate Darlings)</p>
+        <p>
+            One of my favorite discoveries came from a conversation about what makes a project truly "healthy." 
+            It's not just about commits—it's about <span class="highlight">who's contributing</span>. 
+            A project with contributors from 40 different organizations is more resilient than one dominated by a single company.
+        </p>
+        <p>
+            We look for a high <strong>Organizational Diversity Ratio</strong> (Organizations / Contributors).
+            A <span class="highlight">high ratio</span> means many companies care about this, but few people write the code—often critical infrastructure libraries.
+            A <span class="highlight">low ratio</span> means a massive community project where contributor count dwarfs the org count.
+        </p>
+        <div class="notebook-sketch">
+            Org Diversity Ratio = Active Organizations / Active Contributors<br>
+            ─────────────────────────────────────────────────────────────────<br>
+            Higher ratio = more diverse contributor base<br>
+            Lower ratio = might be dominated by few orgs (bus factor risk?)
+        </div>
+    </section>
+
+    <section class="viz-section" id="gems-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">Hidden Gems by Organization Diversity</h3>
+            <p class="viz-subtitle">Smaller projects with remarkably diverse contributor bases</p>
+            <div id="gems-chart"></div>
+        </div>
+    </section>
+
+    <section class="narrative">
+        <p>
+            I wanted the colors to feel like actual gemstones—so I chose an amethyst-to-emerald gradient. 
+            Each gem is sized by the number of contributing organizations, creating this beautiful cluster 
+            where you can immediately spot the most diverse communities.
+        </p>
+        <p>
+            <strong>ko</strong> stands out: 43 organizations contributing among just 68 people. 
+            That's a 63% diversity ratio! These are the projects that survive company pivots, 
+            layoffs, and changing priorities.
+        </p>
+    </section>
+
+    <!-- Visualization 3: Burnout Risk -->
+    <section class="narrative" id="burnout-narrative">
+        <h2>Q6: Who is running out of steam? 🔥</h2>
+        <p class="lead">Burnout Risk: The "Red Alert" List</p>
+        <p>
+            This one was hard to make. Not technically—emotionally. These are projects that were once thriving, 
+            now showing signs of contributor fatigue. The <span class="highlight">momentum score</span> compares 
+            recent commits to historical activity. A steep negative slope means the fire is going out.
+        </p>
+        <p>
+            We looked at projects with <strong>high productivity scores</strong> that have seen a 
+            <span class="highlight">massive drop in momentum</span>. If you depend on these, check on them.
+        </p>
+        <div class="notebook-sketch">
+            Momentum = (current_commits - prev_commits) / prev_commits<br>
+            ─────────────────────────────────────────────────────────────<br>
+            -0.97 means 97% decline in activity 😰<br>
+            These projects need love, contributors, attention
+        </div>
+        <p>
+            I chose to visualize this as flames—bright at the base (historical productivity), 
+            fading toward the top (current state). It felt more honest than a clinical bar chart.
+        </p>
+    </section>
+
+    <section class="viz-section" id="burnout-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">Projects at Risk: Fading Momentum</h3>
+            <p class="viz-subtitle">Historical productivity vs. current decline. Hover to see the stories.</p>
+            <div id="burnout-chart"></div>
+        </div>
+    </section>
+
+    <!-- Visualization 4: The Giants -->
+    <section class="narrative" id="giants-narrative">
+        <h2>Q5: Which projects are punching way above their weight? 🌟</h2>
+        <p class="lead">The "Bus Factor" Watchlist: Small Teams, Massive Output</p>
+        <p>
+            Every data story needs its celebrities. VS Code with 24,000+ contributors. 
+            Home Assistant with its passionate home automation community. Kubernetes powering 
+            the cloud-native revolution. But here's the twist: <span class="highlight">bigger isn't always better</span>.
+        </p>
+        <p>
+            These projects have <strong>≤50 contributors</strong> but generate massive commit volumes.
+            <span class="highlight">Risk:</span> High output from a small group means if one key person leaves, the project could stall.
+            These are the "David" projects of the ecosystem—impressive, but fragile.
+        </p>
+        <p>
+            Look at the efficiency ratio—commits per contributor. The giants are actually quite inefficient 
+            by this metric! That's not a flaw—it's a feature. These projects are gateways. They turn newcomers 
+            into open source contributors. A small fix to VS Code might be someone's first PR ever.
+        </p>
+    </section>
+
+    <section class="viz-section" id="giants-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">The Open Source Giants</h3>
+            <p class="viz-subtitle">Size = Contributors. Color intensity = Commits per contributor.</p>
+            <div id="giants-chart"></div>
+        </div>
+    </section>
+
+    <!-- Visualization 5: Response vs Resolution -->
+    <section class="narrative" id="correlation-narrative">
+        <h2>Q2: If a project responds instantly, do they fix issues faster? ⏱️</h2>
+        <p class="lead">The "Triage Trap": Speed vs. Quality</p>
+        <p>
+            <strong>Hypothesis:</strong> If a project responds instantly to issues, they probably fix them faster too, right?
+        </p>
+        <p>
+            Here's where my hypothesis broke. I assumed faster response times would correlate with 
+            higher resolution rates. <span class="highlight">I was wrong.</span> The correlation? 
+            A mere <strong>0.031</strong>. That's basically zero.
+        </p>
+        <p>
+            <em>Spoiler Alert:</em> Fast bots saying "Thanks for your issue!" doesn't mean the bug gets fixed.
+        </p>
+        <p>
+            This scatter plot shows why. There's no pattern. Fast responders can have low resolution. 
+            Slow projects can resolve everything. It's chaos—beautiful, organic, human chaos.
+        </p>
+    </section>
+
+    <section class="viz-section" id="correlation-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">Response Time vs Resolution Rate</h3>
+            <p class="viz-subtitle">Each dot is a project. Hover to explore the outliers.</p>
+            <div id="correlation-chart"></div>
+        </div>
+    </section>
+
+    <!-- Visualization 6: Growth vs Maintenance -->
+    <section class="narrative" id="growth-narrative">
+        <h2>Q3: Building a skyscraper or painting walls? 🏗️</h2>
+        <p class="lead">Growth vs. Maintenance</p>
+        <p>
+            We compare <strong>Commit Activity</strong> against <strong>Codebase Size</strong>.
+            <span class="highlight">High Commits + Low Size</span> = High maintenance/refactoring. The team is working hard 
+            to keep things running or cleaning up technical debt.
+            <span class="highlight">High Commits + High Size</span> = Massive expansion.
+        </p>
+        <p>
+            Projects like <strong>Model Context Protocol (MCP)</strong> appeared here with huge activity but small size—
+            classic signs of a new, rapidly iterating standard or heavy refactoring.
+        </p>
+    </section>
+
+    <section class="viz-section" id="growth-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">Growth vs. Maintenance Ratio</h3>
+            <p class="viz-subtitle">Codebase size vs commit activity. High maintenance projects in warm colors.</p>
+            <div id="growth-chart"></div>
+        </div>
+    </section>
+
+    <!-- Visualization 7: Churn Analysis -->
+    <section class="narrative" id="churn-narrative">
+        <h2>Q8: Building features or rewriting code forever? 🔄</h2>
+        <p class="lead">The "Churn" Trap: Motion vs. Progress</p>
+        <p>
+            We calculated a <strong>Churn Ratio</strong>: Commits per Net Line of Code Change.
+        </p>
+        <div class="notebook-sketch">
+            Churn Analysis:<br>
+            ─────────────────────────────────────────────────────────────<br>
+            Low Ratio (~1.0): Every commit adds value (Growth) ✅<br>
+            High Ratio (>100): Hundreds of commits to change 5 lines 🚨<br><br>
+            → High churn = refactoring, stabilization, or non-code work<br>
+            → They're spinning wheels (or polishing the engine)
+        </div>
+    </section>
+
+    <section class="viz-section" id="churn-viz">
+        <div class="viz-container">
+            <h3 class="viz-title">The Churn Trap: Activity vs. Growth</h3>
+            <p class="viz-subtitle">Projects with high churn are working hard but not necessarily growing.</p>
+            <div id="churn-chart"></div>
+        </div>
+    </section>
+
+    <!-- Reflection -->
+    <section class="narrative" id="reflection">
+        <h2>🏁 Final Verdict: Answers to the Questions</h2>
+        <p>
+            Building this visualization taught me something I didn't expect. Open source isn't just code—it's 
+            <span class="highlight">a living ecosystem</span>. Projects breathe, grow, sometimes struggle.
+        </p>
+        <div class="notebook-sketch">
+            The Answers We Found:<br>
+            ══════════════════════════════════════════════════════════════════<br><br>
+            <strong>Q1: Do you need a massive army to move fast?</strong><br>
+            → NO! Projects like <strong>CBT Tape</strong> (3 contributors, 1,138 commits/person) prove small teams can be incredibly efficient.<br><br>
+            
+            <strong>Q2: Fast response = fast resolution?</strong><br>
+            → NO! Correlation is just <strong>0.031</strong>. Speed doesn't predict quality. Bots saying "thanks!" ≠ bugs fixed.<br><br>
+            
+            <strong>Q3: Building or painting walls?</strong><br>
+            → Mixed! Projects like <strong>MCP</strong> show massive activity with small codebases—heavy refactoring or rapid iteration.<br><br>
+            
+            <strong>Q4: Hidden gems with corporate backing?</strong><br>
+            → YES! <strong>ko</strong>, <strong>Infection</strong>, <strong>Numcodecs</strong> have 60%+ org diversity ratios—critical infrastructure backed by many.<br><br>
+            
+            <strong>Q5: Who's punching above their weight?</strong><br>
+            → Watch the <strong>Bus Factor</strong> list: <strong>Mushroom Observer</strong>, <strong>SOAJS</strong> produce 20K+ commits with ≤50 people.<br><br>
+            
+            <strong>Q6: Who's running out of steam?</strong><br>
+            → RED ALERT: <strong>Islet</strong> and <strong>CheriBSD</strong> show >97% decline in activity. Check on them!<br><br>
+            
+            <strong>Q7: Low contributors always bad?</strong><br>
+            → NO! Libraries like <strong>MarkupSafe</strong> don't need 1000 cooks. Apps like <strong>E4S</strong> might need more help.<br><br>
+            
+            <strong>Q8: Building features or rewriting code?</strong><br>
+            → Some are stuck! <strong>MCP</strong> and <strong>EVerest</strong> show >2000 commits per net line change—heavy churn.
+        </div>
+        <p>
+            I started with questions about efficiency and ended up with a meditation on sustainability. 
+            The "best" projects aren't the biggest or fastest—they're the ones that keep burning, 
+            year after year, through changing trends and technologies.
+        </p>
+        <p style="font-size: 1.3rem; text-align: center; margin-top: 3rem; font-style: italic;">
+            <em>Data doesn't lie, but it does whisper. You just have to listen closely.</em>
+        </p>
+    </section>
+
+    <!-- The Invitation -->
+    <section class="narrative" id="invitation">
+        <h2>The Invitation 🚀</h2>
+        <p>
+            If you've made it this far, you're my kind of person. This data is public—all from the 
+            Linux Foundation Leaderboards. I encourage you to explore, fork the code, find your own stories.
+        </p>
+        <p>
+            Maybe you'll find a hidden gem that needs contributors. Maybe you'll discover a project 
+            at risk of burnout and decide to help. The beauty of open source is that 
+            <span class="highlight">the next commit could be yours</span>.
+        </p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p style="margin-bottom: 1rem; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.1rem; color: var(--accent-coral);">
+            ~ Analysis by <a href="https://github.com/PythonicVarun" target="_blank" style="color: var(--accent-coral); text-decoration: none;">@PythonicVarun</a> ~
+        </p>
+        <p>
+            Crafted with 💜 using D3.js, real data from Linux Foundation Leaderboards, and lots of coffee.<br>
+            <a href="https://github.com/PythonicVarun/LinuxFoundation-Leaderboards-Analysis" target="_blank">View the code on GitHub</a>
+        </p>
+    </footer>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- Scripts will be added in parts -->
+    <script>
+        // Load the data
+        let reportData = {};
+        const tooltip = d3.select('#tooltip');
+
+        async function loadData() {
+            try {
+                const response = await fetch('../report_data.json');
+                reportData = await response.json();
+                console.log('Data loaded:', Object.keys(reportData));
+                initVisualizations();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function initVisualizations() {
+            createEfficiencyConstellation();
+            createHiddenGems();
+            createBurnoutRisk();
+            createGiants();
+            createCorrelationScatter();
+            createGrowthChart();
+            createChurnChart();
+        }
+
+        // Visualization 1: Efficiency Constellation
+        function createEfficiencyConstellation() {
+            const container = d3.select('#efficiency-chart');
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 500;
+            
+            const data = reportData.efficiency.slice(0, 30);
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .style('display', 'block')
+                .style('margin', '0 auto');
+
+            // Create gradient definitions
+            const defs = svg.append('defs');
+            
+            // Glow filter
+            const filter = defs.append('filter')
+                .attr('id', 'glow')
+                .attr('x', '-50%')
+                .attr('y', '-50%')
+                .attr('width', '200%')
+                .attr('height', '200%');
+            filter.append('feGaussianBlur')
+                .attr('stdDeviation', '3')
+                .attr('result', 'coloredBlur');
+            const feMerge = filter.append('feMerge');
+            feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+            feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+            // Scales
+            const efficiencyExtent = d3.extent(data, d => d.commits_per_contributor);
+            const commitsExtent = d3.extent(data, d => d.commits);
+            
+            const colorScale = d3.scaleSequential()
+                .domain([efficiencyExtent[1], efficiencyExtent[0]])
+                .interpolator(d3.interpolateRgb('#ff6b6b', '#4ecdc4'));
+            
+            const radiusScale = d3.scaleSqrt()
+                .domain(commitsExtent)
+                .range([6, 35]);
+
+            // Force simulation
+            const simulation = d3.forceSimulation(data)
+                .force('x', d3.forceX(width / 2).strength(0.05))
+                .force('y', d3.forceY(height / 2).strength(0.05))
+                .force('charge', d3.forceManyBody().strength(-50))
+                .force('collision', d3.forceCollide().radius(d => radiusScale(d.commits) + 5));
+
+            // Background stars (decorative)
+            for (let i = 0; i < 50; i++) {
+                svg.append('circle')
+                    .attr('cx', Math.random() * width)
+                    .attr('cy', Math.random() * height)
+                    .attr('r', Math.random() * 1.5)
+                    .attr('fill', '#ddd')
+                    .attr('opacity', Math.random() * 0.5 + 0.2);
+            }
+
+            // Create nodes
+            const nodes = svg.selectAll('.star')
+                .data(data)
+                .join('circle')
+                .attr('class', 'star')
+                .attr('r', d => radiusScale(d.commits))
+                .attr('fill', d => colorScale(d.commits_per_contributor))
+                .attr('filter', 'url(#glow)')
+                .attr('opacity', 0.85)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 1)
+                        .attr('r', radiusScale(d.commits) * 1.2);
+                    
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>${d.name}</h4>
+                            <p><strong>${d.commits_per_contributor.toFixed(1)}</strong> commits per contributor</p>
+                            <p>${d.active_contributors} contributors · ${d.commits.toLocaleString()} commits</p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 0.85)
+                        .attr('r', radiusScale(d.commits));
+                    tooltip.classed('visible', false);
+                });
+
+            // Labels for top projects
+            const labels = svg.selectAll('.label')
+                .data(data.slice(0, 5))
+                .join('text')
+                .attr('class', 'label')
+                .text(d => d.name)
+                .attr('font-size', '11px')
+                .attr('fill', '#666')
+                .attr('text-anchor', 'middle')
+                .attr('dy', d => radiusScale(d.commits) + 14);
+
+            simulation.on('tick', () => {
+                nodes
+                    .attr('cx', d => d.x = Math.max(40, Math.min(width - 40, d.x)))
+                    .attr('cy', d => d.y = Math.max(40, Math.min(height - 40, d.y)));
+                labels
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+
+            // Legend
+            const legend = svg.append('g')
+                .attr('transform', `translate(${width - 150}, 30)`);
+            
+            legend.append('text')
+                .text('Efficiency')
+                .attr('font-size', '12px')
+                .attr('fill', '#666');
+            
+            const gradientLegend = defs.append('linearGradient')
+                .attr('id', 'legend-gradient');
+            gradientLegend.append('stop').attr('offset', '0%').attr('stop-color', '#ff6b6b');
+            gradientLegend.append('stop').attr('offset', '100%').attr('stop-color', '#4ecdc4');
+            
+            legend.append('rect')
+                .attr('y', 10)
+                .attr('width', 100)
+                .attr('height', 10)
+                .attr('rx', 5)
+                .attr('fill', 'url(#legend-gradient)');
+            
+            legend.append('text').text('High').attr('x', 0).attr('y', 35).attr('font-size', '10px').attr('fill', '#999');
+            legend.append('text').text('Low').attr('x', 80).attr('y', 35).attr('font-size', '10px').attr('fill', '#999');
+        }
+
+        // Visualization 2: Hidden Gems - Radial Layout
+        function createHiddenGems() {
+            const container = d3.select('#gems-chart');
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 500;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            const data = reportData.hidden_gems;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Scales
+            const diversityExtent = d3.extent(data, d => d.org_diversity_ratio);
+            const orgExtent = d3.extent(data, d => d.active_organizations);
+            
+            const angleScale = d3.scaleLinear()
+                .domain([0, data.length])
+                .range([0, 2 * Math.PI]);
+            
+            const radiusScale = d3.scaleLinear()
+                .domain(diversityExtent)
+                .range([180, 80]);
+            
+            const sizeScale = d3.scaleSqrt()
+                .domain(orgExtent)
+                .range([8, 30]);
+            
+            const colorScale = d3.scaleSequential()
+                .domain(diversityExtent)
+                .interpolator(d3.interpolateRgb('#4ecdc4', '#a855f7'));
+
+            // Concentric guide circles
+            [80, 130, 180].forEach((r, i) => {
+                svg.append('circle')
+                    .attr('cx', centerX)
+                    .attr('cy', centerY)
+                    .attr('r', r)
+                    .attr('fill', 'none')
+                    .attr('stroke', '#eee')
+                    .attr('stroke-dasharray', '4,4');
+            });
+
+            // Gems
+            const gems = svg.selectAll('.gem')
+                .data(data)
+                .join('g')
+                .attr('class', 'gem')
+                .attr('transform', (d, i) => {
+                    const angle = angleScale(i) - Math.PI / 2;
+                    const radius = radiusScale(d.org_diversity_ratio);
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    return `translate(${x}, ${y})`;
+                });
+
+            // Gem shapes (hexagons for gem effect)
+            gems.append('path')
+                .attr('d', d => {
+                    const size = sizeScale(d.active_organizations);
+                    const points = [];
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i * 60 - 30) * Math.PI / 180;
+                        points.push([Math.cos(angle) * size, Math.sin(angle) * size]);
+                    }
+                    return 'M' + points.map(p => p.join(',')).join('L') + 'Z';
+                })
+                .attr('fill', d => colorScale(d.org_diversity_ratio))
+                .attr('opacity', 0.8)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 1)
+                        .attr('transform', 'scale(1.2)');
+                    
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>💎 ${d.name}</h4>
+                            <p><strong>${(d.org_diversity_ratio * 100).toFixed(1)}%</strong> diversity ratio</p>
+                            <p>${d.active_organizations} organizations</p>
+                            <p>${d.active_contributors} contributors</p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 0.8)
+                        .attr('transform', 'scale(1)');
+                    tooltip.classed('visible', false);
+                });
+
+            // Labels for high diversity gems
+            gems.filter(d => d.org_diversity_ratio > 0.55)
+                .append('text')
+                .text(d => d.name)
+                .attr('text-anchor', 'middle')
+                .attr('dy', d => sizeScale(d.active_organizations) + 14)
+                .attr('font-size', '10px')
+                .attr('fill', '#666');
+
+            // Center label
+            svg.append('text')
+                .attr('x', centerX)
+                .attr('y', centerY - 10)
+                .attr('text-anchor', 'middle')
+                .attr('font-family', 'Playfair Display, serif')
+                .attr('font-size', '14px')
+                .attr('fill', '#999')
+                .text('Higher Diversity');
+            
+            svg.append('text')
+                .attr('x', centerX)
+                .attr('y', centerY + 10)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '11px')
+                .attr('fill', '#bbb')
+                .text('(center)');
+        }
+
+        // Visualization 3: Burnout Risk - Flame Chart
+        function createBurnoutRisk() {
+            const container = d3.select('#burnout-chart');
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 400;
+            const margin = { top: 40, right: 30, bottom: 80, left: 60 };
+            
+            const data = reportData.burnout_risk.slice(0, 12);
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Scales
+            const xScale = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, innerWidth])
+                .padding(0.3);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.productivity_score)])
+                .range([innerHeight, 0]);
+
+            // Gradient for flames
+            const defs = svg.append('defs');
+            
+            data.forEach((d, i) => {
+                const gradient = defs.append('linearGradient')
+                    .attr('id', `flame-gradient-${i}`)
+                    .attr('x1', '0%')
+                    .attr('y1', '100%')
+                    .attr('x2', '0%')
+                    .attr('y2', '0%');
+                
+                gradient.append('stop')
+                    .attr('offset', '0%')
+                    .attr('stop-color', '#ff6b6b');
+                gradient.append('stop')
+                    .attr('offset', `${Math.abs(d.momentum) * 100}%`)
+                    .attr('stop-color', '#ffd93d');
+                gradient.append('stop')
+                    .attr('offset', '100%')
+                    .attr('stop-color', '#333');
+            });
+
+            // Flame paths (stylized bars)
+            g.selectAll('.flame')
+                .data(data)
+                .join('path')
+                .attr('class', 'flame')
+                .attr('d', (d, i) => {
+                    const x = xScale(d.name);
+                    const w = xScale.bandwidth();
+                    const h = innerHeight - yScale(d.productivity_score);
+                    const y = yScale(d.productivity_score);
+                    
+                    // Flame shape
+                    return `
+                        M ${x + w * 0.1} ${innerHeight}
+                        Q ${x} ${innerHeight - h * 0.3} ${x + w * 0.2} ${y + h * 0.3}
+                        Q ${x + w * 0.35} ${y - 10} ${x + w * 0.5} ${y}
+                        Q ${x + w * 0.65} ${y - 10} ${x + w * 0.8} ${y + h * 0.3}
+                        Q ${x + w} ${innerHeight - h * 0.3} ${x + w * 0.9} ${innerHeight}
+                        Z
+                    `;
+                })
+                .attr('fill', (d, i) => `url(#flame-gradient-${i})`)
+                .attr('opacity', 0.85)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 1);
+                    
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>🔥 ${d.name}</h4>
+                            <p>Productivity score: <strong>${d.productivity_score.toFixed(1)}</strong></p>
+                            <p>Current: ${d.commits} commits</p>
+                            <p>Previous: ${d.prev_commits.toLocaleString()} commits</p>
+                            <p style="color: #ff6b6b"><strong>${(d.momentum * 100).toFixed(1)}%</strong> decline</p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 0.85);
+                    tooltip.classed('visible', false);
+                });
+
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0, ${innerHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll('text')
+                .attr('transform', 'rotate(-45)')
+                .attr('text-anchor', 'end')
+                .attr('dx', '-0.5em')
+                .attr('dy', '0.5em')
+                .attr('font-size', '10px');
+
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale).ticks(5))
+                .selectAll('text')
+                .attr('font-size', '10px');
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -innerHeight / 2)
+                .attr('y', -45)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '11px')
+                .attr('fill', '#666')
+                .text('Productivity Score');
+        }
+
+        // Visualization 4: The Giants - Bubble Pack
+        function createGiants() {
+            const container = d3.select('#giants-chart');
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 550;
+            
+            const data = reportData.efficiency_all.slice(0, 25);
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Pack layout
+            const pack = d3.pack()
+                .size([width - 20, height - 20])
+                .padding(8);
+
+            const root = d3.hierarchy({ children: data })
+                .sum(d => d.active_contributors || 1);
+
+            const nodes = pack(root).leaves();
+
+            // Color scale based on efficiency
+            const efficiencyExtent = d3.extent(data, d => d.commits_per_contributor);
+            const colorScale = d3.scaleSequential()
+                .domain([0, efficiencyExtent[1]])
+                .interpolator(d3.interpolateRgb('#e8f4f8', '#4ecdc4'));
+
+            // Bubbles
+            const bubbles = svg.selectAll('.bubble')
+                .data(nodes)
+                .join('g')
+                .attr('class', 'bubble')
+                .attr('transform', d => `translate(${d.x + 10}, ${d.y + 10})`);
+
+            bubbles.append('circle')
+                .attr('r', d => d.r)
+                .attr('fill', d => colorScale(d.data.commits_per_contributor))
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .attr('opacity', 0.9)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 1)
+                        .attr('stroke-width', 4);
+                    
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>🌟 ${d.data.name}</h4>
+                            <p><strong>${d.data.active_contributors.toLocaleString()}</strong> contributors</p>
+                            <p>${d.data.commits.toLocaleString()} commits</p>
+                            <p>Efficiency: ${d.data.commits_per_contributor.toFixed(2)} commits/person</p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 0.9)
+                        .attr('stroke-width', 2);
+                    tooltip.classed('visible', false);
+                });
+
+            // Labels for larger bubbles
+            bubbles.filter(d => d.r > 35)
+                .append('text')
+                .text(d => {
+                    const name = d.data.name;
+                    return name.length > 12 ? name.slice(0, 10) + '…' : name;
+                })
+                .attr('text-anchor', 'middle')
+                .attr('dy', '0.3em')
+                .attr('font-size', d => Math.min(d.r / 3, 14) + 'px')
+                .attr('fill', '#333')
+                .attr('pointer-events', 'none');
+
+            // Contributor count for very large bubbles
+            bubbles.filter(d => d.r > 60)
+                .append('text')
+                .text(d => d.data.active_contributors.toLocaleString())
+                .attr('text-anchor', 'middle')
+                .attr('dy', '1.5em')
+                .attr('font-size', '10px')
+                .attr('fill', '#666')
+                .attr('pointer-events', 'none');
+        }
+
+        // Visualization 5: Correlation Scatter
+        function createCorrelationScatter() {
+            const container = d3.select('#correlation-chart');
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 450;
+            const margin = { top: 40, right: 40, bottom: 60, left: 70 };
+            
+            // Filter to reasonable response times (under 100,000 hours)
+            const data = reportData.response_resolution.filter(d => 
+                d.response_time_hours < 100000 && d.resolution_rate < 15
+            );
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Scales (log scale for response time)
+            const xScale = d3.scaleLog()
+                .domain([d3.min(data, d => d.response_time_hours) || 1, d3.max(data, d => d.response_time_hours)])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.resolution_rate)])
+                .range([innerHeight, 0]);
+
+            // Add gradient background
+            const gradient = svg.append('defs')
+                .append('radialGradient')
+                .attr('id', 'scatter-bg')
+                .attr('cx', '50%')
+                .attr('cy', '50%')
+                .attr('r', '50%');
+            gradient.append('stop').attr('offset', '0%').attr('stop-color', 'rgba(78, 205, 196, 0.05)');
+            gradient.append('stop').attr('offset', '100%').attr('stop-color', 'transparent');
+
+            g.append('rect')
+                .attr('width', innerWidth)
+                .attr('height', innerHeight)
+                .attr('fill', 'url(#scatter-bg)');
+
+            // Grid lines
+            g.append('g')
+                .attr('class', 'grid')
+                .attr('opacity', 0.3)
+                .call(d3.axisLeft(yScale)
+                    .tickSize(-innerWidth)
+                    .tickFormat('')
+                );
+
+            // Points
+            g.selectAll('.point')
+                .data(data)
+                .join('circle')
+                .attr('class', 'point')
+                .attr('cx', d => xScale(d.response_time_hours))
+                .attr('cy', d => yScale(d.resolution_rate))
+                .attr('r', 6)
+                .attr('fill', d => {
+                    // Color by quadrant
+                    const fastResponse = d.response_time_hours < 5000;
+                    const highResolution = d.resolution_rate > 2;
+                    if (fastResponse && highResolution) return '#4ecdc4'; // Stars
+                    if (fastResponse && !highResolution) return '#ffd93d'; // Quick but incomplete
+                    if (!fastResponse && highResolution) return '#a855f7'; // Slow but thorough
+                    return '#ff6b6b'; // Needs attention
+                })
+                .attr('opacity', 0.7)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('r', 10)
+                        .attr('opacity', 1);
+                    
+                    const hoursToReadable = (hours) => {
+                        if (hours < 24) return `${hours.toFixed(0)} hours`;
+                        if (hours < 720) return `${(hours/24).toFixed(1)} days`;
+                        return `${(hours/720).toFixed(1)} months`;
+                    };
+                    
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>${d.name}</h4>
+                            <p>Response: <strong>${hoursToReadable(d.response_time_hours)}</strong></p>
+                            <p>Resolution rate: <strong>${d.resolution_rate.toFixed(2)}</strong></p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('r', 6)
+                        .attr('opacity', 0.7);
+                    tooltip.classed('visible', false);
+                });
+
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0, ${innerHeight})`)
+                .call(d3.axisBottom(xScale)
+                    .tickValues([100, 1000, 10000, 100000])
+                    .tickFormat(d => {
+                        if (d < 24) return d + 'h';
+                        if (d < 720) return (d/24).toFixed(0) + 'd';
+                        return (d/720).toFixed(0) + 'mo';
+                    }))
+                .selectAll('text')
+                .attr('font-size', '11px');
+
+            g.append('text')
+                .attr('x', innerWidth / 2)
+                .attr('y', innerHeight + 45)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '12px')
+                .attr('fill', '#666')
+                .text('Response Time (log scale)');
+
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale).ticks(5))
+                .selectAll('text')
+                .attr('font-size', '11px');
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -innerHeight / 2)
+                .attr('y', -50)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '12px')
+                .attr('fill', '#666')
+                .text('Resolution Rate');
+
+            // Correlation annotation
+            g.append('text')
+                .attr('x', innerWidth - 10)
+                .attr('y', 20)
+                .attr('text-anchor', 'end')
+                .attr('font-size', '12px')
+                .attr('fill', '#999')
+                .text(`Correlation: ${reportData.correlation.toFixed(3)}`);
+
+            // Legend
+            const legendData = [
+                { color: '#4ecdc4', label: 'Fast & High Resolution' },
+                { color: '#ffd93d', label: 'Fast & Low Resolution' },
+                { color: '#a855f7', label: 'Slow & High Resolution' },
+                { color: '#ff6b6b', label: 'Slow & Low Resolution' }
+            ];
+
+            const legend = g.append('g')
+                .attr('transform', `translate(10, 10)`);
+
+            legendData.forEach((d, i) => {
+                const row = legend.append('g')
+                    .attr('transform', `translate(0, ${i * 18})`);
+                row.append('circle')
+                    .attr('r', 5)
+                    .attr('fill', d.color);
+                row.append('text')
+                    .attr('x', 12)
+                    .attr('y', 4)
+                    .attr('font-size', '10px')
+                    .attr('fill', '#666')
+                    .text(d.label);
+            });
+        }
+
+        // Visualization 6: Growth vs Maintenance
+        function createGrowthChart() {
+            const container = d3.select('#growth-chart');
+            if (!container.node()) return;
+            
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 450;
+            const margin = { top: 40, right: 40, bottom: 60, left: 80 };
+
+            // Get top maintenance projects + sample of others
+            const topMaintenance = reportData.top_maintenance || [];
+            const allGrowth = reportData.growth_maintenance || [];
+            const sampleOthers = allGrowth.filter(d => d.codebase_size > 1000 && d.commits > 100).slice(0, 100);
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Scales
+            const xScale = d3.scaleLog()
+                .domain([d3.min(sampleOthers, d => d.commits) || 100, d3.max(sampleOthers, d => d.commits)])
+                .range([0, innerWidth]);
+
+            const yScale = d3.scaleLog()
+                .domain([d3.min(sampleOthers, d => d.codebase_size) || 1000, d3.max(sampleOthers, d => d.codebase_size)])
+                .range([innerHeight, 0]);
+
+            const colorScale = d3.scaleSequential()
+                .domain([0, d3.max(topMaintenance, d => d.maintenance_ratio) || 0.001])
+                .interpolator(d3.interpolateRgb('#4ecdc4', '#ff6b6b'));
+
+            // Background dots (all projects)
+            g.selectAll('.bg-dot')
+                .data(sampleOthers)
+                .join('circle')
+                .attr('class', 'bg-dot')
+                .attr('cx', d => xScale(d.commits))
+                .attr('cy', d => yScale(d.codebase_size))
+                .attr('r', 4)
+                .attr('fill', '#ddd')
+                .attr('opacity', 0.5);
+
+            // Top maintenance projects (highlighted)
+            g.selectAll('.highlight-dot')
+                .data(topMaintenance)
+                .join('circle')
+                .attr('class', 'highlight-dot')
+                .attr('cx', d => xScale(Math.max(100, d.commits)))
+                .attr('cy', d => yScale(Math.max(1000, d.codebase_size)))
+                .attr('r', 10)
+                .attr('fill', d => colorScale(d.maintenance_ratio))
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this).transition().duration(200).attr('r', 14);
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>🏗️ ${d.name}</h4>
+                            <p>Commits: <strong>${d.commits.toLocaleString()}</strong></p>
+                            <p>Codebase: <strong>${(d.codebase_size / 1000).toFixed(0)}K</strong> lines</p>
+                            <p>Maintenance ratio: <strong>${d.maintenance_ratio.toFixed(4)}</strong></p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style('left', (event.pageX + 15) + 'px').style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function() {
+                    d3.select(this).transition().duration(200).attr('r', 10);
+                    tooltip.classed('visible', false);
+                });
+
+            // Axes
+            g.append('g')
+                .attr('transform', `translate(0, ${innerHeight})`)
+                .call(d3.axisBottom(xScale).ticks(5, '~s'))
+                .selectAll('text').attr('font-size', '10px');
+
+            g.append('text')
+                .attr('x', innerWidth / 2).attr('y', innerHeight + 45)
+                .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#666')
+                .text('Commits (log scale)');
+
+            g.append('g')
+                .call(d3.axisLeft(yScale).ticks(5, '~s'))
+                .selectAll('text').attr('font-size', '10px');
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -innerHeight / 2).attr('y', -60)
+                .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#666')
+                .text('Codebase Size (lines, log scale)');
+        }
+
+        // Visualization 7: Churn Analysis
+        function createChurnChart() {
+            const container = d3.select('#churn-chart');
+            if (!container.node()) return;
+            
+            const width = Math.min(900, container.node().getBoundingClientRect().width);
+            const height = 400;
+            const margin = { top: 20, right: 30, bottom: 60, left: 50 };
+
+            const data = (reportData.churn_high || []).slice(0, 12);
+            if (data.length === 0) return;
+
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Scales
+            const xScale = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, innerWidth])
+                .padding(0.2);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.churn_ratio)])
+                .range([innerHeight, 0]);
+
+            const colorScale = d3.scaleSequential()
+                .domain([0, d3.max(data, d => d.churn_ratio)])
+                .interpolator(d3.interpolateRgb('#ffd93d', '#ff6b6b'));
+
+            // Bars
+            g.selectAll('.bar')
+                .data(data)
+                .join('rect')
+                .attr('class', 'bar')
+                .attr('x', d => xScale(d.name))
+                .attr('y', d => yScale(d.churn_ratio))
+                .attr('width', xScale.bandwidth())
+                .attr('height', d => innerHeight - yScale(d.churn_ratio))
+                .attr('fill', d => colorScale(d.churn_ratio))
+                .attr('rx', 4)
+                .style('cursor', 'pointer')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this).attr('opacity', 0.8);
+                    tooltip.classed('visible', true)
+                        .html(`
+                            <h4>🔄 ${d.name}</h4>
+                            <p>Commits: <strong>${d.commits.toLocaleString()}</strong></p>
+                            <p>Net line change: <strong>${d.net_line_change.toLocaleString()}</strong></p>
+                            <p>Churn ratio: <strong>${d.churn_ratio.toFixed(1)}</strong></p>
+                            <p style="color: #ff6b6b; font-size: 0.8rem;">High churn = lots of rework</p>
+                        `);
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style('left', (event.pageX + 15) + 'px').style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseleave', function() {
+                    d3.select(this).attr('opacity', 1);
+                    tooltip.classed('visible', false);
+                });
+
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0, ${innerHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll('text')
+                .attr('transform', 'rotate(-45)')
+                .attr('text-anchor', 'end')
+                .attr('dx', '-0.5em')
+                .attr('dy', '0.5em')
+                .attr('font-size', '9px');
+
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale).ticks(5))
+                .selectAll('text').attr('font-size', '10px');
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -innerHeight / 2).attr('y', -35)
+                .attr('text-anchor', 'middle').attr('font-size', '11px').attr('fill', '#666')
+                .text('Churn Ratio (commits / net line change)');
+        }
+
+        // Scroll animation observer
+        function initScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.narrative, .viz-section').forEach(el => {
+                el.classList.add('fade-in');
+                observer.observe(el);
+            });
+        }
+
+        // Initialize
+        loadData();
+        initScrollAnimations();
+    </script>
+</body>
+</html>
