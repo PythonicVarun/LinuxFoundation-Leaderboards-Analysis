@@ -1403,10 +1403,10 @@
                             x: d.net_line_change,
                             y: d.commits,
                             name: d.name,
-                            churn: d.churn_ratio
+                            churn: d.churn_ratio_proxy
                         })),
                         backgroundColor: data.map(d => {
-                            const churn = d.churn_ratio;
+                            const churn = d.churn_ratio_proxy;
                             if (churn > 100) return wsjColors.lightRed;
                             if (churn > 10) return 'rgba(255, 193, 7, 0.6)';
                             return wsjColors.lightBlue;

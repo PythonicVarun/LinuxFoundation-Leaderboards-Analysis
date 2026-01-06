@@ -1343,14 +1343,14 @@
         };
 
         const plotlyLayout = {
-            font: { family: 'Source Sans Pro, sans-serif', size: 13 },
+            font: { family: 'Source Sans Pro, sans-serif', size: 13, color: '#333' },
             paper_bgcolor: 'transparent',
             plot_bgcolor: 'transparent',
             margin: { l: 60, r: 40, t: 40, b: 60 },
             hoverlabel: {
-                bgcolor: '#fff',
-                bordercolor: '#e5e5e5',
-                font: { family: 'Source Sans Pro, sans-serif', size: 13 }
+                bgcolor: '#1a1a1a',
+                bordercolor: '#1a1a1a',
+                font: { family: 'Source Sans Pro, sans-serif', size: 13, color: '#ffffff' }
             }
         };
 
@@ -1374,8 +1374,8 @@
                     hovertemplate: '<b>%{text}</b><br>Contributors: %{x}<br>Commits: %{y}<br>Commits/Person: %{marker.color:.1f}<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#f0f0f0' },
-                    yaxis: { type: 'log', title: 'Commits (12 months)', gridcolor: '#f0f0f0' },
+                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#e5e5e5' },
+                    yaxis: { type: 'log', title: 'Commits (12 months)', gridcolor: '#e5e5e5' },
                     height: 500
                 }, plotlyConfig);
             }
@@ -1404,8 +1404,8 @@
                     hoverinfo: 'skip'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { title: 'Response Time (hours)', gridcolor: '#f0f0f0', range: [0, 200] },
-                    yaxis: { title: 'Resolution Rate', gridcolor: '#f0f0f0', tickformat: '.0%' },
+                    xaxis: { title: 'Response Time (hours)', gridcolor: '#e5e5e5', range: [0, 200] },
+                    yaxis: { title: 'Resolution Rate', gridcolor: '#e5e5e5', tickformat: '.0%' },
                     height: 450,
                     showlegend: false,
                     annotations: [{
@@ -1428,18 +1428,18 @@
                     y: churnData.map(d => d.commits),
                     marker: {
                         size: 10,
-                        color: churnData.map(d => Math.log10(d.churn_ratio + 1)),
+                        color: churnData.map(d => Math.log10(d.churn_ratio_proxy + 1)),
                         colorscale: [[0, colors.success], [0.5, colors.warning], [1, colors.danger]],
                         opacity: 0.7,
                         line: { width: 1, color: '#fff' }
                     },
+                    customdata: churnData,
                     text: churnData.map(d => d.name),
-                    hovertemplate: '<b>%{text}</b><br>Net LOC Change: %{x:,.0f}<br>Commits: %{y:,.0f}<br>Churn Ratio: ' +
-                        churnData.map(d => d.churn_ratio.toFixed(1)).join('') + '<extra></extra>'
+                    hovertemplate: '<b>%{text}</b><br>Net LOC Change: %{x:,.0f}<br>Commits: %{y:,.0f}<br>Churn Ratio: %{customdata.churn_ratio_proxy:.2f}<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { type: 'log', title: 'Net Line Changes (Growth)', gridcolor: '#f0f0f0' },
-                    yaxis: { type: 'log', title: 'Commits (Activity)', gridcolor: '#f0f0f0' },
+                    xaxis: { type: 'log', title: 'Net Line Changes (Growth)', gridcolor: '#e5e5e5' },
+                    yaxis: { type: 'log', title: 'Commits (Activity)', gridcolor: '#e5e5e5' },
                     height: 500
                 }, plotlyConfig);
             }
@@ -1463,8 +1463,8 @@
                     hovertemplate: '<b>%{text}</b><br>Contributors: %{x}<br>Organizations: %{y}<br>Diversity Ratio: %{marker.color:.2f}<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#f0f0f0' },
-                    yaxis: { type: 'log', title: 'Active Organizations', gridcolor: '#f0f0f0' },
+                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#e5e5e5' },
+                    yaxis: { type: 'log', title: 'Active Organizations', gridcolor: '#e5e5e5' },
                     height: 500
                 }, plotlyConfig);
             }
@@ -1486,8 +1486,8 @@
                     hovertemplate: '<b>%{text}</b><br>Productivity Score: %{x:.1f}<br>Momentum: %{y:.1f}%<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { type: 'log', title: 'Productivity Score', gridcolor: '#f0f0f0' },
-                    yaxis: { title: 'Momentum (% Change)', gridcolor: '#f0f0f0', zeroline: true, zerolinecolor: '#333', zerolinewidth: 2 },
+                    xaxis: { type: 'log', title: 'Productivity Score', gridcolor: '#e5e5e5' },
+                    yaxis: { title: 'Momentum (% Change)', gridcolor: '#e5e5e5', zeroline: true, zerolinecolor: '#333', zerolinewidth: 2 },
                     height: 500,
                     shapes: [{
                         type: 'line',
@@ -1516,7 +1516,7 @@
                     hovertemplate: '<b>%{y}</b><br>Commits: %{x:,.0f}<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { title: 'Commits (12 months)', gridcolor: '#f0f0f0' },
+                    xaxis: { title: 'Commits (12 months)', gridcolor: '#e5e5e5' },
                     yaxis: { automargin: true },
                     height: 500,
                     margin: { l: 180, r: 40, t: 20, b: 60 }
@@ -1542,8 +1542,8 @@
                     hovertemplate: '<b>%{text}</b><br>Commits: %{x:,.0f}<br>Codebase Size: %{y:,.0f} LOC<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { type: 'log', title: 'Commits (Activity)', gridcolor: '#f0f0f0' },
-                    yaxis: { type: 'log', title: 'Codebase Size (LOC)', gridcolor: '#f0f0f0' },
+                    xaxis: { type: 'log', title: 'Commits (Activity)', gridcolor: '#e5e5e5' },
+                    yaxis: { type: 'log', title: 'Codebase Size (LOC)', gridcolor: '#e5e5e5' },
                     height: 500
                 }, plotlyConfig);
             }
@@ -1572,8 +1572,8 @@
                     hovertemplate: '<b>%{text}</b><br>Contributors: %{x}<br>Organizations: %{y}<extra></extra>'
                 }], {
                     ...plotlyLayout,
-                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#f0f0f0' },
-                    yaxis: { type: 'log', title: 'Active Organizations', gridcolor: '#f0f0f0' },
+                    xaxis: { type: 'log', title: 'Active Contributors', gridcolor: '#e5e5e5' },
+                    yaxis: { type: 'log', title: 'Active Organizations', gridcolor: '#e5e5e5' },
                     height: 500,
                     annotations: [
                         { x: 0.02, y: 0.98, xref: 'paper', yref: 'paper', text: '🟢 Library/Tool', showarrow: false, font: { size: 12 } },

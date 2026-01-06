@@ -362,6 +362,8 @@
             padding-right: 0.75rem;
             font-size: 0.8rem;
             font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            min-width: fit-content;
         }
 
         .bar.cyan { background: var(--gradient-1); }
@@ -410,20 +412,57 @@
 
         .scatter-axis {
             position: absolute;
-            color: var(--text-muted);
-            font-size: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
         }
 
         .scatter-axis.x {
             bottom: 0;
             left: 50%;
             transform: translateX(-50%);
+            white-space: nowrap;
         }
 
         .scatter-axis.y {
-            left: 0;
+            left: -35px;
             top: 50%;
             transform: translateY(-50%) rotate(-90deg);
+            white-space: nowrap;
+        }
+
+        .scatter-container {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 80px);
+            margin: 0 auto;
+            padding: 10px 40px 35px 50px;
+        }
+
+        .scatter-plot-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-left: 2px solid var(--text-muted);
+            border-bottom: 2px solid var(--text-muted);
+        }
+
+        .axis-tick {
+            position: absolute;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .axis-tick.x-tick {
+            bottom: -20px;
+            transform: translateX(-50%);
+        }
+
+        .axis-tick.y-tick {
+            left: -35px;
+            transform: translateY(50%);
         }
 
         /* Insight Cards */
@@ -1068,17 +1107,19 @@
 
         /* Highlight text */
         .highlight {
-            background: linear-gradient(120deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 245, 212, 0.3) 100%);
+            background: linear-gradient(120deg, rgba(0, 245, 212, 0.25) 0%, rgba(0, 245, 212, 0.25) 100%);
             background-repeat: no-repeat;
             background-size: 100% 40%;
             background-position: 0 90%;
+            color: var(--accent-cyan);
         }
 
         .highlight-pink {
-            background: linear-gradient(120deg, rgba(255, 0, 110, 0.3) 0%, rgba(255, 0, 110, 0.3) 100%);
+            background: linear-gradient(120deg, rgba(255, 0, 110, 0.25) 0%, rgba(255, 0, 110, 0.25) 100%);
             background-repeat: no-repeat;
             background-size: 100% 40%;
             background-position: 0 90%;
+            color: var(--accent-pink);
         }
 
         /* Number highlight */
@@ -1196,7 +1237,7 @@
                 <div class="section-number">02 / THE TRIAGE TRAP</div>
                 <h2 class="section-title">Speed vs. Quality</h2>
                 <p class="section-subtitle">
-                    <span class="highlight">"If a project responds instantly to issues, they probably fix them faster too, right?"</span>
+                    <span class="highlight-pink">"If a project responds instantly to issues, they probably fix them faster too, right?"</span>
                 </p>
             </div>
 
@@ -1207,9 +1248,10 @@
             <div class="chart-container fade-in" style="height: 500px;">
                 <h3 class="chart-title">⏱️ Response Time vs. Resolution Rate</h3>
                 <p class="chart-subtitle">Each dot is a project. Hover to explore.</p>
-                <div class="scatter-container" id="responseResolutionScatter">
+                <div class="scatter-container">
                     <div class="scatter-axis x">Response Time (Hours) →</div>
-                    <div class="scatter-axis y">Resolution Rate →</div>
+                    <div class="scatter-axis y">← Resolution Rate</div>
+                    <div class="scatter-plot-area" id="responseResolutionScatter"></div>
                 </div>
             </div>
 
@@ -1250,9 +1292,10 @@
             <div class="chart-container fade-in" style="height: 500px;">
                 <h3 class="chart-title">🏗️ Commit Activity vs. Codebase Size</h3>
                 <p class="chart-subtitle">Projects in the upper-left are "maintenance heavy"</p>
-                <div class="scatter-container" id="growthMaintenanceScatter">
-                    <div class="scatter-axis x">Commits →</div>
-                    <div class="scatter-axis y">Codebase Size (LOC) →</div>
+                <div class="scatter-container">
+                    <div class="scatter-axis x">Commits (log scale) →</div>
+                    <div class="scatter-axis y">← Codebase Size (LOC)</div>
+                    <div class="scatter-plot-area" id="growthMaintenanceScatter"></div>
                 </div>
             </div>
 
@@ -1303,9 +1346,10 @@
             <div class="chart-container fade-in" style="height: 500px;">
                 <h3 class="chart-title">💎 Contributors vs. Organizations</h3>
                 <p class="chart-subtitle">Larger dots = higher organizational diversity</p>
-                <div class="scatter-container" id="hiddenGemsScatter">
-                    <div class="scatter-axis x">Active Contributors →</div>
-                    <div class="scatter-axis y">Active Organizations →</div>
+                <div class="scatter-container">
+                    <div class="scatter-axis x">Active Contributors (log scale) →</div>
+                    <div class="scatter-axis y">← Active Organizations</div>
+                    <div class="scatter-plot-area" id="hiddenGemsScatter"></div>
                 </div>
             </div>
 
@@ -1386,7 +1430,7 @@
                 <div class="section-number">06 / BURNOUT RISK</div>
                 <h2 class="section-title">Running Out of Steam</h2>
                 <p class="section-subtitle">
-                    <span class="highlight">"Who is running out of steam?"</span>
+                    <span class="highlight-pink">"Who is running out of steam?"</span>
                 </p>
             </div>
 
@@ -1397,9 +1441,10 @@
             <div class="chart-container fade-in" style="height: 500px;">
                 <h3 class="chart-title">🔥 Productivity vs. Momentum</h3>
                 <p class="chart-subtitle">Red dots = slowing down. Green dots = accelerating.</p>
-                <div class="scatter-container" id="burnoutScatter">
-                    <div class="scatter-axis x">Productivity Score →</div>
-                    <div class="scatter-axis y">Momentum (Activity Change) →</div>
+                <div class="scatter-container">
+                    <div class="scatter-axis x">Productivity Score (log scale) →</div>
+                    <div class="scatter-axis y">← Momentum (% Change)</div>
+                    <div class="scatter-plot-area" id="burnoutScatter"></div>
                 </div>
             </div>
 
@@ -1436,7 +1481,7 @@
                 <div class="section-number">07 / THE CHURN TRAP</div>
                 <h2 class="section-title">Motion vs. Progress</h2>
                 <p class="section-subtitle">
-                    <span class="highlight">"Are they building new features or just rewriting the same code forever?"</span>
+                    <span class="highlight-pink">"Are they building new features or just rewriting the same code forever?"</span>
                 </p>
             </div>
 
@@ -1488,16 +1533,17 @@
                 <p>We segmented our "Hidden Gems" into <strong>Libraries</strong> and <strong>Apps</strong>.</p>
                 <ul class="analysis-legend">
                     <li><span class="legend-dot purple"></span> <strong>Libraries</strong> (e.g., Resolve, MarkupSafe): High corp use + low contributors = <span class="highlight">Healthy</span>. Stable APIs don't need a thousand cooks.</li>
-                    <li><span class="legend-dot pink"></span> <strong>Apps</strong> (e.g., E4S): High corp use + low contributors = <span class="highlight">Warning</span>. Companies using the app but not giving back.</li>
+                    <li><span class="legend-dot pink"></span> <strong>Apps</strong> (e.g., E4S): High corp use + low contributors = <span class="highlight-pink">Warning</span>. Companies using the app but not giving back.</li>
                 </ul>
             </div>
 
             <div class="chart-container fade-in" style="height: 500px;">
                 <h3 class="chart-title">📚 Hidden Gems Segmentation</h3>
                 <p class="chart-subtitle">Color-coded by type: Libraries vs. Apps vs. Hybrid</p>
-                <div class="scatter-container" id="segmentedGemsScatter">
-                    <div class="scatter-axis x">Active Contributors →</div>
-                    <div class="scatter-axis y">Active Organizations →</div>
+                <div class="scatter-container">
+                    <div class="scatter-axis x">Active Contributors (log scale) →</div>
+                    <div class="scatter-axis y">← Active Organizations</div>
+                    <div class="scatter-plot-area" id="segmentedGemsScatter"></div>
                 </div>
             </div>
 
@@ -1965,7 +2011,7 @@
             const data = reportData.churn_high.slice(0, 15);
             tableBody.innerHTML = data.map((item, index) => {
                 const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'default';
-                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.commits?.toLocaleString()}</td><td>${item.code_changes?.toLocaleString() || 'N/A'}</td><td>${item.churn_ratio?.toFixed(1) || 'N/A'}</td></tr>`;
+                return `<tr><td><span class="rank-badge ${rankClass}">${index + 1}</span></td><td>${item.name}</td><td>${item.commits?.toLocaleString()}</td><td>${item.net_line_change?.toLocaleString() || 'N/A'}</td><td>${item.churn_ratio_proxy?.toFixed(2) || 'N/A'}</td></tr>`;
             }).join('');
         }
 

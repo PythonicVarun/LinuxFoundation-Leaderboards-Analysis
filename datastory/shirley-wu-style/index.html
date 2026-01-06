@@ -1380,7 +1380,23 @@
             // Get top maintenance projects + sample of others
             const topMaintenance = reportData.top_maintenance || [];
             const allGrowth = reportData.growth_maintenance || [];
-            const sampleOthers = allGrowth.filter(d => d.codebase_size > 1000 && d.commits > 100).slice(0, 100);
+            // Filter for reasonable display range and ensure we have valid data
+            const sampleOthers = allGrowth
+                .filter(d => d.codebase_size > 1000 && d.commits > 100)
+                .slice(0, 100);
+
+            console.log('Top Maintenance Projects:', topMaintenance);
+            console.log('Sample Others:', sampleOthers);
+            console.log('All Growth Data:', allGrowth);
+
+            // If no data, show a message
+            if (sampleOthers.length === 0 && topMaintenance.length === 0) {
+                container.append('p')
+                    .style('text-align', 'center')
+                    .style('color', '#999')
+                    .text('No data available for this visualization');
+                return;
+            }
             
             const svg = container.append('svg')
                 .attr('width', width)
@@ -1392,14 +1408,28 @@
             const g = svg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-            // Scales
+            // Combine all data for scale calculation to include both datasets
+            const allData = [...sampleOthers, ...topMaintenance.map(d => ({
+                ...d,
+                codebase_size: Math.max(1, d.codebase_size)  // Ensure minimum of 1 for log scale
+            }))];
+
+            // Scales - include top_maintenance in domain calculation
             const xScale = d3.scaleLog()
-                .domain([d3.min(sampleOthers, d => d.commits) || 100, d3.max(sampleOthers, d => d.commits)])
-                .range([0, innerWidth]);
+                .domain([
+                    Math.max(1, d3.min(allData, d => d.commits) || 100),
+                    d3.max(allData, d => d.commits) || 1000
+                ])
+                .range([0, innerWidth])
+                .clamp(true);
 
             const yScale = d3.scaleLog()
-                .domain([d3.min(sampleOthers, d => d.codebase_size) || 1000, d3.max(sampleOthers, d => d.codebase_size)])
-                .range([innerHeight, 0]);
+                .domain([
+                    Math.max(1, d3.min(allData, d => d.codebase_size) || 1),
+                    d3.max(allData, d => d.codebase_size) || 1000
+                ])
+                .range([innerHeight, 0])
+                .clamp(true);
 
             const colorScale = d3.scaleSequential()
                 .domain([0, d3.max(topMaintenance, d => d.maintenance_ratio) || 0.001])
@@ -1416,17 +1446,17 @@
                 .attr('fill', '#ddd')
                 .attr('opacity', 0.5);
 
-            // Top maintenance projects (highlighted)
+            // Top maintenance projects (highlighted) - these have HIGH commits but LOW codebase size
             g.selectAll('.highlight-dot')
                 .data(topMaintenance)
                 .join('circle')
                 .attr('class', 'highlight-dot')
-                .attr('cx', d => xScale(Math.max(100, d.commits)))
-                .attr('cy', d => yScale(Math.max(1000, d.codebase_size)))
-                .attr('r', 10)
+                .attr('cx', d => xScale(Math.max(1, d.commits)))
+                .attr('cy', d => yScale(Math.max(1, d.codebase_size)))
+                .attr('r', 12)
                 .attr('fill', d => colorScale(d.maintenance_ratio))
                 .attr('stroke', '#fff')
-                .attr('stroke-width', 2)
+                .attr('stroke-width', 3)
                 .style('cursor', 'pointer')
                 .on('mouseenter', function(event, d) {
                     d3.select(this).transition().duration(200).attr('r', 14);
@@ -1496,12 +1526,15 @@
                 .range([0, innerWidth])
                 .padding(0.2);
 
+            // Use churn_ratio_proxy as the field name from the data
+            const getChurnRatio = d => d.churn_ratio_proxy || 0;
+
             const yScale = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.churn_ratio)])
+                .domain([0, d3.max(data, getChurnRatio)])
                 .range([innerHeight, 0]);
 
             const colorScale = d3.scaleSequential()
-                .domain([0, d3.max(data, d => d.churn_ratio)])
+                .domain([0, d3.max(data, getChurnRatio)])
                 .interpolator(d3.interpolateRgb('#ffd93d', '#ff6b6b'));
 
             // Bars
@@ -1510,20 +1543,21 @@
                 .join('rect')
                 .attr('class', 'bar')
                 .attr('x', d => xScale(d.name))
-                .attr('y', d => yScale(d.churn_ratio))
+                .attr('y', d => yScale(getChurnRatio(d)))
                 .attr('width', xScale.bandwidth())
-                .attr('height', d => innerHeight - yScale(d.churn_ratio))
-                .attr('fill', d => colorScale(d.churn_ratio))
+                .attr('height', d => innerHeight - yScale(getChurnRatio(d)))
+                .attr('fill', d => colorScale(getChurnRatio(d)))
                 .attr('rx', 4)
                 .style('cursor', 'pointer')
                 .on('mouseenter', function(event, d) {
                     d3.select(this).attr('opacity', 0.8);
+                    const churnVal = d.churn_ratio_proxy || 0;
                     tooltip.classed('visible', true)
                         .html(`
                             <h4>🔄 ${d.name}</h4>
                             <p>Commits: <strong>${d.commits.toLocaleString()}</strong></p>
                             <p>Net line change: <strong>${d.net_line_change.toLocaleString()}</strong></p>
-                            <p>Churn ratio: <strong>${d.churn_ratio.toFixed(1)}</strong></p>
+                            <p>Churn ratio: <strong>${churnVal.toFixed(1)}</strong></p>
                             <p style="color: #ff6b6b; font-size: 0.8rem;">High churn = lots of rework</p>
                         `);
                 })
