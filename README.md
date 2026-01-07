@@ -5,7 +5,7 @@
 
 ## 🌐 Live Data Stories
 
-Explore the interactive data stories: **[View Data Stories](https://pythonicvarun.github.io/LinuxFoundation-Leaderboards-Analysis/datastory)**
+Explore the interactive data stories: **[View Data Stories](https://pythonicvarun.github.io/LinuxFoundation-Leaderboards-Analysis/)**
 
 ## 📊 Beyond the Leaderboards
 
