@@ -59,8 +59,9 @@ uv run analysis.py
 │   └── ...
 └── datastory/               # Generated data stories (GitHub Pages)
     ├── index.html                  # Landing page for all stories
+    ├── PROMPTS.md                  # Prompts used for generating stories
     ├── report_data.json            # Processed analysis data
-    ├── chhota-bheem-style/         # Adventure-themed story
+    ├── animated-style/             # Adventure-themed story
     ├── malcolm-gladwell-style/     # Narrative journalism style
     ├── polygraph-style/            # Interactive scrollytelling
     ├── shirley-wu-style/           # Artistic D3.js visualizations
