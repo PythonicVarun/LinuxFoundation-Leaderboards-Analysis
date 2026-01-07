@@ -33,13 +33,13 @@ jobs:
 
       - name: 📄 Export notebook
         run: |
-          mkdir -p analysis
-          uv run marimo export html ./analysis.py -o index.html
+          mkdir -p datastory/analysis
+          uv run marimo export html ./analysis.py -o analysis/index.html
 
       - name: 📦 Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: './datastory'
 
   deploy:
     needs: build
