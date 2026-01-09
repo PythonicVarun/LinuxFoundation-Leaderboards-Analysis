@@ -1678,7 +1678,7 @@
                 reportData = await response.json();
                 
                 // Load small teams data from datasets
-                const smallTeamsResponse = await fetch('../../datasets/small-teams-massive-output_full.json');
+                const smallTeamsResponse = await fetch('../datasets/small-teams-massive-output_full.json');
                 const smallTeamsData = await smallTeamsResponse.json();
                 reportData.small_teams_massive_output = smallTeamsData;
                 
