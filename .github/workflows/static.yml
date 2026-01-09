@@ -34,6 +34,7 @@ jobs:
       - name: 📄 Export notebook
         run: |
           mkdir -p datastory/analysis
+          cp -r datasets datastory/
           uv run marimo export html ./analysis.py -o datastory/analysis/index.html
 
       - name: 📦 Upload Pages Artifact
