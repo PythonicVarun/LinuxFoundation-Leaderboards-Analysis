@@ -37,6 +37,13 @@ jobs:
           cp -r datasets datastory/
           uv run marimo export html ./analysis.py -o datastory/analysis/index.html
 
+      - name: 🙃 Install minhtml
+        run: sudo apt-get update && sudo apt-get install -y minify
+
+      - name: 📂 Minify static files
+        run: |
+          find . -type f -name "*.html" -exec minify -o {} {} \;
+
       - name: 📦 Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
